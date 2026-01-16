@@ -7,7 +7,7 @@ USER 0
 # Mettre a jours de système et installer les packet
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        python=3 \
+        python3 \
         python3-pip \
         build-essential \
         gcc \
