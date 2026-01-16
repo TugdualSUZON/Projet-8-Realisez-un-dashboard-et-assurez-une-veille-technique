@@ -13,7 +13,7 @@ RUN apt-get update && \
 # récupération du Model, requirement and main.py et le dockerfile
 # Mettre les fichier dans répertoire temporaire pour éviter les problèmes d'accès
 COPY ./requirements_main_main.txt /tmp/requirements_main.txt
-     ./mlflow_to_deploy /temp/mlflow_to_deploy
+COPY ./mlflow_to_deploy /temp/mlflow_to_deploy
 
 #   - `--no-cache-dir` évite de laisser le cache dans l’image
 #   - `--disable-pip-version-check` accélère le build
