@@ -9,6 +9,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         python3 \
         python3-pip \
+        python3-venv \
         build-essential \
         gcc \
         libssl-dev \
@@ -16,9 +17,26 @@ RUN apt-get update && \
         python3-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# récupération du Model, requirement and main.py et le dockerfile
+# Installer de quoi créer une nevironnement virtuel
+# Depuis la version 23.10 de Ubuntu python est concidérer comme "externally managed" apt concidère que python doit être installer
+# via les packet Débian (python-foo). Par sécuriter pip refuser d'intaller dans les package python système
+# Il faut créer une environnement virtuel dans le quel installer ces packets avec python3-venv
+
+# Définition de la variable VENV_PATH
+ENV VENV_PATH=/opt/venv
+RUN python3 -m venv $VENV_PATH && \
+    $VENV_PATH/bin/pip install --upgrade pip setuptools wheel
+
+# récupération requirement
 # Mettre les fichier dans répertoire temporaire pour éviter les problèmes d'accès
 COPY ./requirements_main.txt /tmp/requirements_main.txt
+
+# Instalation des package dans le venv
+RUN $VENV_PATH/bin/pip install --no-cache-dir \
+        --disable-pip-version-check \
+        -r /tmp/requirements_main.txt
+        
+# Récupération du modèle        
 COPY ./mlflow_to_deploy /temp/mlflow_to_deploy
 
 #   - `--no-cache-dir` évite de laisser le cache dans l’image
@@ -29,21 +47,12 @@ RUN pip install --no-cache-dir \
  
 #Install pyenv for mlflow API REST https://github.com/pyenv/pyenv?tab=readme-ov-file#linuxunix
 
-## Geting Pyenv
-RUN curl -fsSL https://pyenv.run | bash
-        ## Set up your shell environnement for Pyenv
-RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
-RUN echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
-RUN echo 'eval "$(pyenv init - bash)"' >> ~/.bashrc
-        ## Install python build dependency
-RUN sudo apt update; sudo apt install make build-essential libssl-dev zlib1g-dev \
-libbz2-dev libreadline-dev libsqlite3-dev curl git \
-libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
 
 ## Instaler la version de python pour pyenv
 CMD ["pyenv", "install", "3.13.7"]
 
-# Lancer l'API REST du model
+# Lancer l'API REST du model en utilisant l'environnement viruel
+ENV PATH="$VENV_PATH/bin:$PATH"
 CMD ["python", "mlflow", "models", "serve", "-m", "./mlflow_to_deploy"] # ADD path to file
 
 # Lancer l'iinterface graphique pour intéroger l'API
