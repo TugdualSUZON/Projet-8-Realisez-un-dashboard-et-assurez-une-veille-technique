@@ -1,7 +1,7 @@
 FROM ubuntu/python:3.13-22.04@sha256:e535cf7b1bc84127d022a2d5b6be4ebeb9624edbf3281147f997def4e7468067
 # WORKDIR ./
-COPY ./ 
 # Model, requirement and main.py et le dockerfile
+COPY ./requirements_main.txt  mlflow_to_deploy
 
 RUN pip install -r requirements_main.txt
  
