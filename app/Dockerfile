@@ -1,11 +1,11 @@
 # Definir l'image de base pour le docker
-FROM ubuntu/python:3.13-22.04@sha256:e535cf7b1bc84127d022a2d5b6be4ebeb9624edbf3281147f997def4e7468067
+FROM docker pull ubuntu:resolute-20260106.1@sha256:f3218e7a90a09be6fa17dfba992ce84391701cd9a6fb0b2e7e084eb276da4e7a
 
 # Passer a un utilisateur root qui marche sans fichier passwd
 USER 0
 
-# Commande shell pour le bin bash
-SHELL ["/bin/bash", "-c"]
+# Installer python et pip
+Run apt-get install python=3.13 python3-pip
 
 # Mettre a jours de système et installer les packet
 RUN apt-get update && \
