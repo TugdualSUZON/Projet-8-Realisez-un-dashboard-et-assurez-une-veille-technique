@@ -49,7 +49,10 @@ WORKDIR /app
 
 # Lancer l'API REST du model en utilisant l'environnement viruel
 ENV PATH="$VENV_PATH/bin:$PATH"
-CMD ["python", "-m", "mlflow", "models", "serve", "-m", "./mlflow_to_deploy"] # ADD path to file
+CMD ["python", "-m", "mlflow", "models", "serve", "-m", "./mlflow_to_deploy"]
+# Exposer le port par défaut de mlflow
+EXPOSE 5000
+# ADD path to file
 
 # Lancer l'iinterface graphique pour intéroger l'API
 # CMD ["streamlit", "run", "P7_dashboard.py"]
