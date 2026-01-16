@@ -39,10 +39,13 @@ RUN $VENV_PATH/bin/pip install --no-cache-dir \
         -r /tmp/requirements_main.txt
         
 # Récupération du modèle        
-COPY ./mlflow_to_deploy /temp/mlflow_to_deploy
+COPY ./mlflow_to_deploy /app/mlflow_to_deploy
 
 # Instaler la version de python pour pyenv
 #CMD ["pyenv", "install", "3.13.7"]
+
+# Définir le repertoire de travail
+WORKDIR /app
 
 # Lancer l'API REST du model en utilisant l'environnement viruel
 ENV PATH="$VENV_PATH/bin:$PATH"
