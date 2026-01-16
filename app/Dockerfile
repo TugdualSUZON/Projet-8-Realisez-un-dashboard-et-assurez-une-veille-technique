@@ -1,5 +1,5 @@
-FROM ubuntu/python:3.13?-22.04_stable
-WORKDIR /app
+FROM ubuntu/python:3.13-22.04_stable
+WORKDIR ./app
 COPY ./app # Model, requirement and main.py et le dockerfile
 
 RUN pip install -r requirements_main.txt
