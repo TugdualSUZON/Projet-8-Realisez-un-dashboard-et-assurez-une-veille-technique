@@ -4,6 +4,9 @@ FROM ubuntu/python:3.13-22.04@sha256:e535cf7b1bc84127d022a2d5b6be4ebeb9624edbf32
 # Passer a un utilisateur root qui marche sans fichier passwd
 USER 0
 
+# Commande shell pour le bin bash
+SHELL ["/bin/bash", "-c"]
+
 # Mettre a jours de système et installer les packet
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
