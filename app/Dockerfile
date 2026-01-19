@@ -50,6 +50,10 @@ RUN $VENV_PATH/bin/pip install --no-cache-dir \
 # Installer pyenv pour mlflow
 ENV PYTHON_VERSION=3.13.7
 
+# Set-up necessary Env vars for PyEnv
+ENV PYENV_ROOT /root/.pyenv
+ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+
 # Spécifier les chemine pour pyenv
 RUN curl -fsSL https://pyenv.run | bash \
         ## Set up your shell environnement for Pyenv
