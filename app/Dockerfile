@@ -10,11 +10,18 @@ RUN apt-get update && \
         python3 \
         python3-pip \
         python3-venv \
-        git \
         build-essential \
         gcc \
+        # Pour installer pyenv
         libssl-dev \
-        libffi-dev \
+        zlib1g-dev \
+        libbz2-dev \
+        libreadline-dev \
+        libsqlite3-dev wget ca-certificates \
+        curl llvm libncurses5-dev xz-utils tk-dev \ 
+        libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev \
+        mecab-ipadic-utf8 libncursesw5-dev \
+        git \
         python3-dev && \
     rm -rf /var/lib/apt/lists/*
 
@@ -39,19 +46,19 @@ RUN $VENV_PATH/bin/pip install --no-cache-dir \
         --disable-pip-version-check \
         -r /tmp/requirements_main.txt
 
-# Installer pyenv
-RUN curl -fsSL https://pyenv.run | bash
+
+# Installer pyenv pour mlflow
+ENV PYTHON_VERSION=3.13.7
 
 # Spécifier les chemine pour pyenv
 RUN curl -fsSL https://pyenv.run | bash
         ## Set up your shell environnement for Pyenv
-RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
-RUN echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
-RUN echo 'eval "$(pyenv init - bash)"' >> ~/.bashrc
-
-RUN sudo apt update; sudo apt install make build-essential libssl-dev zlib1g-dev \
-libbz2-dev libreadline-dev libsqlite3-dev curl git \
-libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+    && echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+    && echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+    && echo 'eval "$(pyenv init - bash)"' >> ~/.bashrc
+    && pyenv install $PYTHON_VERSION \
+    && pyenv global $PYTHON_VERSION \
+    && pyenv rehash
 
 # Récupération du modèle        
 COPY ./mlflow_to_deploy /app/mlflow_to_deploy
