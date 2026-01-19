@@ -1,0 +1,43 @@
+# Paramètre du docker pour le cloud render
+# Definir l'image de base pour le docker
+FROM ubuntu:resolute-20260106.1@sha256:f3218e7a90a09be6fa17dfba992ce84391701cd9a6fb0b2e7e084eb276da4e7a
+
+# Passer a un utilisateur root qui marche sans fichier passwd
+USER 0 
+
+# Mettre a jours de système et installer les packets
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# Installer de quoi créer une nevironnement virtuel
+# Depuis la version 23.10 de Ubuntu python est concidérer comme "externally managed" apt concidère que python doit être installer
+# via les packet Débian (python-foo). Par sécuriter pip refuser d'intaller dans les package python système
+# Il faut créer une environnement virtuel dans le quel installer ces packets avec python3-venv
+
+# Définition de la variable VENV_PATH
+ENV VENV_PATH=/opt/venv
+RUN python3 -m venv $VENV_PATH && \
+    $VENV_PATH/bin/pip install --upgrade pip setuptools wheel
+
+# Instalation des package dans le venv
+#   - `--no-cache-dir` évite de laisser le cache dans l’image
+#   - `--disable-pip-version-check` accélère le build
+RUN $VENV_PATH/bin/pip install --no-cache-dir \
+        --disable-pip-version-check \
+        -r /requirements_main.txt
+        
+# Récuperer les fichier pour l'ui
+COPY ./Streamlit_ui /app/ui
+# Définir le repertoire de travail
+WORKDIR app/ui
+
+# Streamlit api
+# Exposer le port par défaut de stremlit
+EXPOSE 8501
+HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+# Lancer l'interface graphique pour intéroger l'API
+ENTRYPOINT ["streamlit", "run", "P7_dashboard.py",
+            "--server.port=8501", "--server.address=0.0.0.0"]
