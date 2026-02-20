@@ -10,10 +10,10 @@ from io import StringIO
 def request_prediction(df):
     # donner l'URL
     ## Fonctionnement tout en local
-    MLFLOW_URL = "http://127.0.0.1:5000" # Pour l'utilisation en local
+    # MLFLOW_URL = "http://127.0.0.1:5000" # Pour l'utilisation en local
     
     ## Fonctionnement en loca et serveur cloud
-    #MLFLOW_URL = "http://projet-7-implementez-un-modele-de-scoring.onrender.com"
+    MLFLOW_URL = "http://projet-7-implementez-un-modele-de-scoring.onrender.com"
     
     ## fonctionnement tous cloud
     #MLFLOW_URL = os.getenv("MLFLOW_URL")
