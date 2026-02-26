@@ -1,0 +1,45 @@
+name: deploy_with_unit_test
+
+on:
+  registry_package:
+    types: [published]
+    
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Pull Image
+        run: docker pull ghcr.io/tugdualsuzon/tugdualsuzon/projet-7-implementez-un-modele-de-scoring/predict_client_payment:main
+
+      - name: Run Container
+        run: docker run -d -p 8080:8080 --name app docker pull ghcr.io/tugdualsuzon/tugdualsuzon/projet-7-implementez-un-modele-de-scoring/predict_client_payment:main
+
+      - name: Smoke Test
+        run: |
+          for i in {1..10}; do
+            if curl -fsS http://localhost:8080; then
+              echo "Smoke test passed "
+              exit 0
+            fi
+            echo "Retrying... ($i)"
+            sleep 3
+          done
+          echo "Smoke test failed "
+          exit 1
+
+      - name: Stop Container
+        if: always()
+        run: docker stop app || true
+
+      - name: Deploy to Render
+        if: ${{ success() }}
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
