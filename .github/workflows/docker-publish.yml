@@ -19,13 +19,6 @@ env:
 
 jobs:
   build-and-push-image:
-    - name: Get repository info
-      id: repo_info
-      run: |
-        repo="${{ github.repository }}"
-        resp=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${repo}")
-        echo "owner_type=$(echo "$resp" | jq -r .owner.type)" >> $GITHUB_OUTPUT
-        echo "is_private=$(echo "$resp" | jq -r .private)" >> $GITHUB_OUTPUT
     
     runs-on: ubuntu-latest
     permissions:
@@ -37,6 +30,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - name: Get repository info
+        id: repo_info
+        run: |
+          repo="${{ github.repository }}"
+          resp=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${repo}")
+          echo "owner_type=$(echo "$resp" | jq -r .owner.type)" >> $GITHUB_OUTPUT
+          echo "is_private=$(echo "$resp" | jq -r .private)" >> $GITHUB_OUTPUT
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
