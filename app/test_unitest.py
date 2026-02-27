@@ -16,9 +16,9 @@ load_dotenv(".env")
 # Chemin vers les données test
     
 def test_load_model():
-
-    MODEL_PATH = r"./app/mlflow_api/mlflow_to_deploy"
     
+    MODEL_PATH = r"./app/mlflow_api/mlflow_to_deploy"
+
     # Arrange , recuperer le chemin du model
     #MODEL_PATH = os.getenv("MODEL_PATH")
     
