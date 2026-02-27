@@ -9,7 +9,6 @@ import mlflow.sklearn
 from imblearn.pipeline import Pipeline
 
 from dotenv import load_dotenv
-import unittest
 
 # charger les variables d'envrionnement
 load_dotenv(".env")
@@ -47,10 +46,5 @@ def test_model_predict():
     # Assert , Le model renvio une prévision
     assert type(pred) != type(None)
 
-if __name__ == "__main__":
-    test_load_model()
-    print("Le model est disponible")
-    test_pred_model()
-    print("Le model renvoi une prévision")
 
     
