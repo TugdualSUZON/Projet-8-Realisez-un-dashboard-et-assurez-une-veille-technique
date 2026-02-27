@@ -17,10 +17,10 @@ load_dotenv(".env")
     
 def test_load_model():
     
-    MODEL_PATH = r"./app/mlflow_api/mlflow_to_deploy"
+    #MODEL_PATH = r"./app/mlflow_api/mlflow_to_deploy"
 
     # Arrange , recuperer le chemin du model
-    #MODEL_PATH = os.getenv("MODEL_PATH")
+    MODEL_PATH = os.getenv("MODEL_PATH")
     
     # Act , charge le model
     model = mlflow.sklearn.load_model(MODEL_PATH)
@@ -30,12 +30,12 @@ def test_load_model():
     
 def test_model_predict():
 
-    MODEL_PATH = r"./app/mlflow_api/mlflow_to_deploy"
-    TEST_DATA_PATH = r"./app/test_data.csv"
+    #MODEL_PATH = r"./app/mlflow_api/mlflow_to_deploy"
+    #TEST_DATA_PATH = r"./app/test_data.csv"
         
     # Arrange , recuperer les données du test
-    #TEST_DATA_PATH = os.getenv("TEST_DATA_PATH")
-    #MODEL_PATH = os.getenv("MODEL_PATH")
+    TEST_DATA_PATH = os.getenv("TEST_DATA_PATH")
+    MODEL_PATH = os.getenv("MODEL_PATH")
     
     # Charger et formater les données
     data = pd.read_csv(TEST_DATA_PATH)
