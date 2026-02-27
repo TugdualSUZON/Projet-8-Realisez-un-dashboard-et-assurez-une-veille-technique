@@ -9,9 +9,9 @@ name: Create and publish a Docker image to github package
 on:
   push:
     branches:
-      -"main"
+      - "main"
     paths:
-      -"app/mlflow_api/**"
+      - "app/mlflow_api/**"
 
 env:
   # Use docker.io for Docker Hub if empty
