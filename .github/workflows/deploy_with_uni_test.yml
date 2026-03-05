@@ -1,4 +1,4 @@
-name: deploy_with_unit_test
+name: deploy_on_render_with_api_unit_test
 
 on:
   workflow_run:
