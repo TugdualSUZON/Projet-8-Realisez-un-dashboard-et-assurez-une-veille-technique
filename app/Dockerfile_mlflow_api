@@ -76,7 +76,7 @@ WORKDIR /app/api
 EXPOSE 10000
 # Lancer l'API REST du model en utilisant l'environnement viruel
 ENV PATH="$VENV_PATH/bin:$PATH"
-HEALTHCHECK CMD curl --fail http://localhost:5000/_stcore/health
+HEALTHCHECK CMD curl --fail http://localhost:10000/_stcore/health
 CMD ["mlflow", "models", "serve", \ 
     "-m", "./mlflow_to_deploy", \
     "--port=10000", "--host=0.0.0.0"]
