@@ -1,12 +1,12 @@
 # But, réaliser des test unitaire
 # Charger le model : est-ce que le model est disponible
-    # Savoir où dans l'arboresence ce fichier vas être éxécuter
 # Faire une prévision en donnant au model un demmy pour vérifier sont fonctionnement
 
 import os
 import pandas as pd
 import mlflow.sklearn
-from imblearn.pipeline import Pipeline
+
+from sklearn.model_selection import TunedThresholdClassifierCV
 
 from dotenv import load_dotenv
 
@@ -26,7 +26,7 @@ def test_load_model():
     model = mlflow.sklearn.load_model(MODEL_PATH)
     
     # Assert ,  test le type de model
-    assert type(model) == Pipeline # Le model doit ce charger
+    assert type(model) == TunedThresholdClassifierCV #Le model doit ce charger et être un optimiser de seuil
     
 def test_model_predict():
 
