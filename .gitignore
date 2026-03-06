@@ -1,0 +1,14 @@
+data/results/log_reg_baseline.csv
+data/results/random_forest_baseline_domain.csv
+data/results/random_forest_baseline_engineered.csv
+data/results/random_forest_baseline.csv
+/mlruns
+/data/raw
+/.pytest_cache
+/.ipynb_checkpoints
+/data/.ipynb_checkpoints
+/app/__pycache__
+/app/.ipynb_checkpoints
+/app/mlflow_api/.ipynb_checkpoints
+/app/mlflow_api/mlflow_to_deploy/.ipynb_checkpoints
+/app/Streamlit_ui/.ipynb_checkpoints
