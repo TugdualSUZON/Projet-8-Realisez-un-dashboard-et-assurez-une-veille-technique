@@ -29,16 +29,7 @@ Le modèle développer ce base sur des infomations bancaires et a pour but de pe
 - `/launch_local_model.py` : script pour lancer l'api du model stocker dans `/app` en local.
 - `/launch_mlflow_ui.py` : script pour lancer l'ui de mlflow en local.
 - `README.md` : ce fichier
-- `test_unitest_locel.py` : script utiliser par unitest pour teste en local la présence du modèle et faire une prévision.  
+- `test_unitest_locel.py` : script utiliser par unitest pour teste en local la présence du modèle et faire une prévision.
+- `requirements.txt` : liste des package de l'environnement conda utilisé.  
   
 Chaque dossier contient le code lié à sa fonctionnalité, facilitant la maintenance et l’évolution du projet.
-
----
-
-Vous pouvez adapter ces sections à ce qui correspond exactement à votre projet.
-
----
-
-### 2. Fichier listant les packages (`requirements.txt`)
-
-Ce fichier est un simple listing ligne par ligne des dépendances Python utilisées dans l’API, par exemple :
