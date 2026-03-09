@@ -1,3 +1,4 @@
+# Inspirer de ce blogpots https://medium.com/@deryayildirimm/deploying-to-render-insert-a-smoke-test-step-with-github-actions-ffbd49a104dd
 name: deploy_on_render_with_api_unit_test
 
 on:
