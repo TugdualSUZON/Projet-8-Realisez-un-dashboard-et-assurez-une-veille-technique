@@ -16,15 +16,19 @@ Le modèle développé ce base sur des informations bancaires et a pour but de p
 ## Prérequis d'installations  
 
 Environnement conda avec :
-- python 3.11.14
-- sklearn 1.8.0, fournis la structure et les algorithmes pour entraîner les modèles de machine learning.
-- imabalanced learn, permet de traiter le problème de déséquilibre des classes dans le dataset.
+- python 3.11.9
+- pyarrow : 12.0.0
 - pip : mlflow 3.7.0, suivie de l'entraînement des modèles et déploiement du modèle sous la forme d'API.
 - pip : virtualenv 20.35.4, environnement virtuel utiliser pour le déploiement du modèle.
+- scikit-learn 1.8.0, fournis la structure et les algorithmes pour entraîner les modèles de machine learning.
+- imbalanced-learn, permet de traiter le problème de déséquilibre des classes dans le dataset.
+- streamlit 1.55.0, pour l'ui de requête de l'api
+- evidently, etude du datadrift
+- pyarrow==12.0.0, pour sklearn et evidently
   
 En local dans le cas d'une machine windows a installer sur le système :
 - pyenv installation : [gihub](https://github.com/pyenv-win/pyenv-win/blob/master/docs/installation.md#add-system-settings).
-- ajouter la version 3.11.14 de python au registre de pyenv.
+- ajouter la version 3.11.9 de python au registre de pyenv.
   
 ## Utilisation  
   
