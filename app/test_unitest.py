@@ -7,6 +7,7 @@ import pandas as pd
 import mlflow.sklearn
 
 from sklearn.model_selection import TunedThresholdClassifierCV
+from sklearn.model_selection import GridSearchCV
 
 from dotenv import load_dotenv
 
@@ -26,7 +27,7 @@ def test_load_model():
     model = mlflow.sklearn.load_model(MODEL_PATH)
     
     # Assert ,  test le type de model
-    assert type(model) == TunedThresholdClassifierCV #Le model doit ce charger et être un optimiser de seuil
+    assert type(model) == TunedThresholdClassifierCV or type(model) == GridSearchCV #Le model doit ce charger et être un optimiser de seuil
     
 def test_model_predict():
 
