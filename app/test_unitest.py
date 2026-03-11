@@ -7,7 +7,7 @@ import pandas as pd
 import mlflow.sklearn
 
 from sklearn.model_selection import TunedThresholdClassifierCV
-from sklearn.model_selection import TunedThresholdClassifierCV
+from sklearn.model_selection import GridSearchCV
 
 from dotenv import load_dotenv
 
