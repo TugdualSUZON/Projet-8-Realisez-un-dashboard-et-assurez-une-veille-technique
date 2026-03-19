@@ -1,5 +1,5 @@
 # Projet 8 Réalisez un dashboard et assurez une veille technique
-date : 06/03/2026  
+date début : 13/03/2026
 Organisme de formation : Openclassrooms  
 Préparation au diplôme d'expert data scientist  
   
