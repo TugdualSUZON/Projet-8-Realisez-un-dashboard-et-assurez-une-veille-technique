@@ -204,7 +204,8 @@ def main():
             raw = pd.read_csv(uploaded_file)
             # Vérifier l'upload
             st.write(raw)
-    
+
+            # Récupérer du dataframe ajouter l'ID du client
             df = copy.copy(raw)
             SK_ID_CURR = df["SK_ID_CURR"]
             SK_ID_CURR = SK_ID_CURR.values[0]
@@ -217,13 +218,15 @@ def main():
                                          format="%0f",
                                          placeholder="Identifiant client : SK_ID_CURR"
                                         )
+            
+            # Transformer le float produit par input_number en entier
             SK_ID_CURR = int(SK_ID_CURR)
 
-            if all_data.loc[all_data["SK_ID_CURR"] == SK_ID_CURR] == None
-            # Ajouter un test validité, doit être dans la base de données
+            # Vérifier que l'ID demander est dans le dataframe des données d'entrainement
+            if all_data.loc[all_data["SK_ID_CURR"] == SK_ID_CURR, :].empty:
+                SK_ID_CURR = None
+                st.write("ERREUR : Identifiant inconnu entrée un identifiant valide")
 
-        
-        
     with right_column:
         if SK_ID_CURR is not None :
             '''
