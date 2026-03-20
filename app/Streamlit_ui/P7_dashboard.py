@@ -45,6 +45,38 @@ def request_prediction(df):
     
     return response.status_code, response.json()
 
+@st.cache_data    
+def load_shap_values(shap_pkl_path=r"./shap_values_unscaled.pkl"):
+    
+    # Charger le fichier des valeurs de shap
+    with open(shap_pkl_path, "rb") as f :
+        unpickeled_object = pickle.load(f)
+
+    # Verifier que l'objet est bien un dictionnaire.
+    if type(unpickeled_object) == dict:
+        
+        # Extraire les deux fichier du dictionnaire
+        key_tab = unpickeled_object["key_tab"]
+        shap_values_unscaled = unpickeled_object["shap_values_unscaled"]
+
+        return key_tab, shap_values_unscaled
+
+    else :
+        print("erreur le fichier charger n'est pas dans le format attendu")
+        return
+
+@st.cache_data
+def load_data():
+
+    # Charger les données générale
+    ## Dataset d'entrainement complet ?
+    all_data = pd.read_csv(r"C:\Users\SUZON\OneDrive - CNR\Documents\Jupyter\Openclassrooms\Projets Openclassrooms\Projet-8-Realisez-un-dashboard-et-assurez-une-veille-technique\data\transformed\train_data_V1.csv")
+    
+    ## Clé primaire et Valeurs de shap
+    key_tab, shap_values_unscaled = load_shap_values()
+   
+    return all_data, key_tab, shap_values_unscaled
+    
 def render_threshold_value(value) :
     
     # Style seaborn pour de belles couleurs par défaut
@@ -128,26 +160,6 @@ def render_threshold_value(value) :
     st.markdown(
         "Aide sous le graphique "
     )
-
-@st.cache_data    
-def load_shap_values(shap_pkl_path=r"./shap_values_unscaled.pkl"):
-    
-    # Charger le fichier des valeurs de shap
-    with open(shap_pkl_path, "rb") as f :
-        unpickeled_object = pickle.load(f)
-
-    # Verifier que l'objet est bien un dictionnaire.
-    if type(unpickeled_object) == dict:
-        
-        # Extraire les deux fichier du dictionnaire
-        key_tab = unpickeled_object["key_tab"]
-        shap_values_unscaled = unpickeled_object["shap_values_unscaled"]
-
-        return key_tab, shap_values_unscaled
-
-    else :
-        print("erreur le fichier charger n'est pas dans le format attendu")
-        return
     
 def render_shap_plot(SK_ID_CURR, key_tab, shap_values_unscaled):
 
@@ -169,21 +181,11 @@ def render_shap_plot(SK_ID_CURR, key_tab, shap_values_unscaled):
             height=500
            )
 
-@st.cache_data
-def load_data():
 
-    # Charger les données générale
-    ## Dataset d'entrainement complet ?
-     all_data = pd.read_csv(r"C:\Users\SUZON\OneDrive - CNR\Documents\Jupyter\Openclassrooms\Projets Openclassrooms\Projet-8-Realisez-un-dashboard-et-assurez-une-veille-technique\data\transformed\train_data_V1.csv")
-    
-    ## Clé primaire et Valeurs de shap
-    key_tab, shap_values_unscaled = load_shap_values()
-   
-    return all_data, key_tab, shap_valued_unscaled
     
 def main():
 
-    all_data, key_tab, shap_valued_unscaled = load_data()
+    all_data, key_tab, shap_values_unscaled = load_data()
     
     # Haut de page, deux colonnes, une pour séléctionner un client ou déposer un fichier, l'autre pour afficher les valeurs principale de ce client
     ## Définir deux colonnes
@@ -212,8 +214,12 @@ def main():
         if uploaded_file == None :
             SK_ID_CURR = st.number_input("- Définiser un identifiant client ici :", 
                                          value=None,
+                                         format="%0f",
                                          placeholder="Identifiant client : SK_ID_CURR"
                                         )
+            SK_ID_CURR = int(SK_ID_CURR)
+
+            if all_data.loc[all_data["SK_ID_CURR"] == SK_ID_CURR] == None
             # Ajouter un test validité, doit être dans la base de données
 
         
