@@ -1,4 +1,5 @@
 import copy
+import os 
 
 import numpy as np
 import pandas as pd
@@ -6,11 +7,17 @@ import streamlit as st
 import requests
 from io import StringIO
 
+import pickle
+
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import seaborn as sns
+import shap
+from streamlit_shap import st_shap # https://github.com/snehankekre/streamlit-shap/tree/main
 
 # Fonctions
+
+@st.cache_data
 def request_prediction(df):
     # donner l'URL
     ## Fonctionnement tout en local
@@ -122,31 +129,129 @@ def render_threshold_value(value) :
         "Aide sous le graphique "
     )
 
-def main():
-    uploaded_file = st.file_uploader("Déposé ici le fichier d'information clients en format csv", type="csv")
-    if uploaded_file is not None:
-        # Charger le fichier en mémoire
-        raw = pd.read_csv(uploaded_file)
-        # Vérifier l'upload
-        st.write(raw)
+@st.cache_data    
+def load_shap_values(shap_pkl_path=r"./shap_values_unscaled.pkl"):
+    
+    # Charger le fichier des valeurs de shap
+    with open(shap_pkl_path, "rb") as f :
+        unpickeled_object = pickle.load(f)
 
-        df = copy.copy(raw)
-        SK_ID_CURR = df["SK_ID_CURR"]
-        SK_ID_CURR = SK_ID_CURR.values[0]
-        del df["SK_ID_CURR"]
-        st.write(f"Identifiant client : {SK_ID_CURR}")
+    # Verifier que l'objet est bien un dictionnaire.
+    if type(unpickeled_object) == dict:
+        
+        # Extraire les deux fichier du dictionnaire
+        key_tab = unpickeled_object["key_tab"]
+        shap_values_unscaled = unpickeled_object["shap_values_unscaled"]
+
+        return key_tab, shap_values_unscaled
+
+    else :
+        print("erreur le fichier charger n'est pas dans le format attendu")
+        return
+    
+def render_shap_plot(SK_ID_CURR, key_tab, shap_values_unscaled):
+
+    # Tracer le Feature importance global
+    st.title("Feature importance global du model")
+    st_shap(shap.plots.bar(shap_values_unscaled),
+            width=1400,
+            height=500
+           )
+
+    # Relier l'id client avec l'index du fichier de shap_values_unscaled
+    mask = key_tab["SK_ID_CURR"] == SK_ID_CURR
+    index = key_tab.loc[mask, :].index[0]
+
+    # Feature importance local pour un client
+    st.title(f"Feature importance local du client {SK_ID_CURR}")
+    st_shap(shap.waterfall_plot(shap_values_unscaled[index]),
+            width=1400,
+            height=500
+           )
+
+@st.cache_data
+def load_data():
+
+    # Charger les données générale
+    ## Dataset d'entrainement complet ?
+     all_data = pd.read_csv(r"C:\Users\SUZON\OneDrive - CNR\Documents\Jupyter\Openclassrooms\Projets Openclassrooms\Projet-8-Realisez-un-dashboard-et-assurez-une-veille-technique\data\transformed\train_data_V1.csv")
+    
+    ## Clé primaire et Valeurs de shap
+    key_tab, shap_values_unscaled = load_shap_values()
+   
+    return all_data, key_tab, shap_valued_unscaled
+    
+def main():
+
+    all_data, key_tab, shap_valued_unscaled = load_data()
+    
+    # Haut de page, deux colonnes, une pour séléctionner un client ou déposer un fichier, l'autre pour afficher les valeurs principale de ce client
+    ## Définir deux colonnes
+    left_column, right_column = st.columns(2)
+
+    with left_column:
+        
+        # Charger les données
+        ## Depuis un fichier
+        uploaded_file = st.file_uploader("- Charger les données client au format .csv ici :",
+                                         type="csv"
+                                        )
+        
+        if uploaded_file is not None:
+            # Charger le fichier en mémoire
+            raw = pd.read_csv(uploaded_file)
+            # Vérifier l'upload
+            st.write(raw)
+    
+            df = copy.copy(raw)
+            SK_ID_CURR = df["SK_ID_CURR"]
+            SK_ID_CURR = SK_ID_CURR.values[0]
+            del df["SK_ID_CURR"]
+
+        ## Depuis la base de données client
+        if uploaded_file == None :
+            SK_ID_CURR = st.number_input("- Définiser un identifiant client ici :", 
+                                         value=None,
+                                         placeholder="Identifiant client : SK_ID_CURR"
+                                        )
+            # Ajouter un test validité, doit être dans la base de données
 
         
-        # Préprocess
-        ## Gestion de l'annomalie dans "DAYS_EMPLOYED_ANOM"
-        #df = copy.copy(raw)
-        #df['DAYS_EMPLOYED_ANOM'] = 0
-        #mask = df["DAYS_EMPLOYED"] == 365243
-        #df.loc[mask, "DAYS_EMPLOYED_ANOM"] = 1
-        #df.loc[mask, "DAYS_EMPLOYED"] = np.nan
+        
+    with right_column:
+        if SK_ID_CURR is not None :
+            '''
+            - Identifiant client actuel
+            '''
+            st.write(f"Identifiant client : {SK_ID_CURR}")
+            '''
+            - Valeurs des features les plus importante
+            '''
+            raw_main_features = copy.copy(all_data)
+            
+            # Liste des colonnes à afficher
+            main_features = ["TARGET", "CODE_GENDER", "DAYS_BIRTH", "DAYS_EMPLOYED", "AMT_INCOME_TOTAL", "EXT_SOURCE_1", "EXT_SOURCE_2", "EXT_SOURCE_3"]
+            raw_main_features = raw_main_features.loc[raw_main_features["SK_ID_CURR"] == SK_ID_CURR, main_features]
+            # Filtrer le dataframe selon la liste des colonnes
+            raw_main_features = raw_main_features.loc[:, main_features]
+            # Pivoter le dataframe
+            raw_main_features = pd.melt(raw_main_features,
+                                        #id_vars="SK_ID_CURR",
+                                        value_vars=raw_main_features)
+            # Affcher le dataframe
+            st.dataframe(raw_main_features)
+            
+        else :
+            '''
+            - Valeurs des features les plus importante  
+              
+            Aucune données client renseigner.
+            '''
+        
         
         
     predict_btn = st.button('Prédire')
+    feature_importance_btn = st.button('Afficher les graph de shap')
     
     if predict_btn:
         
@@ -165,15 +270,21 @@ def main():
         
         render_threshold_value(0.20)
 
+    if SK_ID_CURR is not None :
+        render_shap_plot(SK_ID_CURR, key_tab, shap_values_unscaled)
+
 """
 # Affectation des crédit
-Déterminer la probabilté de remboursement du client :
+Déterminer la probabilté de remboursement du client :  
+  
+1) **Ajouter des information client ou saisisez un identifiant client**
 """
 
 if __name__ == '__main__':
+    
+    st.set_page_config(layout="wide")
+    
+    # Définir le repertoire actif
+    os.chdir(r"C:\Users\SUZON\OneDrive - CNR\Documents\Jupyter\Openclassrooms\Projets Openclassrooms\Projet-8-Realisez-un-dashboard-et-assurez-une-veille-technique\app\Streamlit_ui")
+    
     main()
-
-"""
-INFO:     Uvicorn running on http://127.0.0.1:5000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:47046 - "HEAD / HTTP/1.1" 404 Not Found
-"""
