@@ -17,6 +17,7 @@ from streamlit_shap import st_shap # https://github.com/snehankekre/streamlit-sh
 
 # Fonctions
 
+#------------------------Charger des données--------------------------#
 @st.cache_data
 def request_prediction(df):
     # donner l'URL
@@ -76,7 +77,8 @@ def load_data():
     key_tab, shap_values_unscaled = load_shap_values()
    
     return all_data, key_tab, shap_values_unscaled
-    
+
+#------------------------Produire les graphiques--------------------------#
 def render_threshold_value(value) :
     
     # Style seaborn pour de belles couleurs par défaut
@@ -156,7 +158,6 @@ def render_threshold_value(value) :
     # Afficher la figure dans Streamlit
     st.pyplot(fig)
     
-    # Indication texte expliquant les contrôles (avec variables mathématiques en LaTeX)
     st.markdown(
         "Aide sous le graphique "
     )
@@ -181,13 +182,20 @@ def render_shap_plot(SK_ID_CURR, key_tab, shap_values_unscaled):
             height=500
            )
 
+def render_violineplot(all_data, feature) :
 
+    fig, ax = plt.subplots()
+
+    ax.violinplot(all_data[feature], showmeans=True)
+    st.pyplot(fig)
+
+#------------------------Main fonction--------------------------#
     
 def main():
 
     all_data, key_tab, shap_values_unscaled = load_data()
     
-    # Haut de page, deux colonnes, une pour séléctionner un client ou déposer un fichier, l'autre pour afficher les valeurs principale de ce client
+    # Haut de page, deux colonnes, une pour sélectionner un client ou déposer un fichier, l'autre pour afficher les valeurs principale de ce client
     ## Définir deux colonnes
     left_column, right_column = st.columns(2)
 
@@ -222,7 +230,7 @@ def main():
             # Transformer le float produit par input_number en entier
             SK_ID_CURR = int(SK_ID_CURR)
 
-            # Vérifier que l'ID demander est dans le dataframe des données d'entrainement
+            # Vérifier que l'ID demander est dans le dataframe des données d'entraînement
             if all_data.loc[all_data["SK_ID_CURR"] == SK_ID_CURR, :].empty:
                 SK_ID_CURR = None
                 st.write("ERREUR : Identifiant inconnu entrée un identifiant valide")
@@ -247,7 +255,7 @@ def main():
             raw_main_features = pd.melt(raw_main_features,
                                         #id_vars="SK_ID_CURR",
                                         value_vars=raw_main_features)
-            # Affcher le dataframe
+            # Afficher le dataframe
             st.dataframe(raw_main_features)
             
         else :
@@ -256,8 +264,6 @@ def main():
               
             Aucune données client renseigner.
             '''
-        
-        
         
     predict_btn = st.button('Prédire')
     feature_importance_btn = st.button('Afficher les graph de shap')
@@ -279,9 +285,21 @@ def main():
         
         render_threshold_value(0.20)
 
+    # Uniquement si un client a été sélectionné
     if SK_ID_CURR is not None :
+        
+        '''
+        2) **Conportement du model**
+        '''
+        
         render_shap_plot(SK_ID_CURR, key_tab, shap_values_unscaled)
 
+        '''
+        3) **Etudier la place du clients pour certaine feature**
+        '''
+        
+        feature = st.selectbox("Choisir une feature", main_features)
+        render_violineplot(all_data, feature)
 """
 # Affectation des crédit
 Déterminer la probabilté de remboursement du client :  
