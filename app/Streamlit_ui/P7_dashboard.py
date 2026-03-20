@@ -182,23 +182,36 @@ def render_shap_plot(SK_ID_CURR, key_tab, shap_values_unscaled):
             height=500
            )
 
-def render_violineplot(all_data, feature) :
+def render_violineplot(all_data, feature, SK_ID_CURR) :
 
-    fig, ax = plt.subplots()
+    # Client value
+    client_value = all_data.loc[all_data["SK_ID_CURR"] == SK_ID_CURR, feature].values[0]
 
-    ax.violinplot(all_data[feature], showmeans=True)
-    st.pyplot(fig)
+    # Message
+    st.write("Position du client au sein de l'ensemble des clients, la valeur de la feature du client est donné par le point rouge")
+    
+    fig, ax = plt.subplots(figsize=(5, 4))
+    
+    sns.violinplot(all_data[feature], ax=ax)
+    sns.stripplot({0: client_value}, edgecolor='black', linewidth=1, palette=['red'], ax=ax)
+
+    ax.set_title(f"Graphique de densité de la feature {feature}")
+    
+    st.pyplot(fig, width="content")
 
 #------------------------Main fonction--------------------------#
     
 def main():
 
+#------------------------Charger des données--------------------------#
     all_data, key_tab, shap_values_unscaled = load_data()
-    
+
+#------------------------Haut de page choix du client--------------------------#
     # Haut de page, deux colonnes, une pour sélectionner un client ou déposer un fichier, l'autre pour afficher les valeurs principale de ce client
     ## Définir deux colonnes
     left_column, right_column = st.columns(2)
 
+##-------------------- Choix du client
     with left_column:
         
         # Charger les données
@@ -235,6 +248,7 @@ def main():
                 SK_ID_CURR = None
                 st.write("ERREUR : Identifiant inconnu entrée un identifiant valide")
 
+##-------------------- Détaille des valeurs des features les plus importante pour le client sélectionné
     with right_column:
         if SK_ID_CURR is not None :
             '''
@@ -263,8 +277,11 @@ def main():
             - Valeurs des features les plus importante  
               
             Aucune données client renseigner.
-            '''
-        
+           '''
+
+    del left_column, right_column
+
+##-------------------- Prédire la probabilité du client en fonction des données d'entré, interrogation de l'API       
     predict_btn = st.button('Prédire')
     feature_importance_btn = st.button('Afficher les graph de shap')
     
@@ -285,21 +302,36 @@ def main():
         
         render_threshold_value(0.20)
 
+# Graphiques liée au clients
     # Uniquement si un client a été sélectionné
     if SK_ID_CURR is not None :
         
+##-------------------- Feature importance        
         '''
         2) **Conportement du model**
         '''
         
         render_shap_plot(SK_ID_CURR, key_tab, shap_values_unscaled)
-
+        
+##-------------------- Position du client par rapport au reste de la base de données     
         '''
         3) **Etudier la place du clients pour certaine feature**
         '''
         
         feature = st.selectbox("Choisir une feature", main_features)
-        render_violineplot(all_data, feature)
+        
+        ## Définir deux colonnes
+        left_column, right_column = st.columns(2)
+        
+        with left_column:
+            render_violineplot(all_data, feature, SK_ID_CURR)
+
+        with right_column:
+            st.title(f"Lien entre {feature} et la valeurs de shap")
+            st_shap(shap.plots.scatter(shap_values_unscaled[:, feature]),
+            width=1400,
+            height=500
+           )
 """
 # Affectation des crédit
 Déterminer la probabilté de remboursement du client :  
