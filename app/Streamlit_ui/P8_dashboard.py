@@ -393,11 +393,56 @@ def main():
         '''
         ## 4) **Etudier l'intéraction entre deux features**
         '''
-        feature_1 = st.selectbox("Choisir une feature", main_features, key="f1")
-    
-        Feature_2 = st.selectbox("Choisir une feature", main_features, key="f2")
-    
+        # Utiliser la persistance des valeurs de variable entre les runs
+        if "feature_1" not in st.session_state:
+            st.session_state["feature_1"] = None
+            
+        if "feature_2" not in st.session_state:
+            st.session_state["feature_2"] = None
 
+        # Définir les variables à utiliser avec des liste déroulante
+        ## Copier la liste de feature de base.
+        list_feature_2 = main_features.copy()
+
+        ## définir la valeurs de feature_1
+        st.session_state.feature_1 = st.selectbox("Choisir une feature X", main_features, index=None, key="f1")
+        
+        if st.session_state.feature_1 == None:
+            feature_2_disabled = True
+        else :
+            feature_2_disabled = False
+            ## retirer la valeurs de feature_1 de la liste de séléction de feature 2 pour éviter qu'il soit identique
+            list_feature_2.remove(st.session_state.feature_1)
+            
+        ## définir la valeurs de feature_2
+        st.session_state.feature_2 = st.selectbox("Choisir une feature Y", list_feature_2, index=None, disabled = feature_2_disabled, key="f2")
+
+        ## Vérifier que feature_1 a été renseigné
+        if st.session_state.feature_1 == None :
+            st.write("La valeurs de la première variable X n'est pas renseigner")
+            st.stop()
+
+        ## Vérifier que feature_2 a été renseigné
+        elif st.session_state.feature_2 == None :
+            st.write("La valeurs de la deuxième variable Y n'est pas renseigner")
+            st.stop()
+
+        ## Afficher le graphique
+        else :
+            fig, ax = plt.subplots(
+                
+            )
+            ax.set_title(f"Variation de {st.session_state.feature_2} en fonction de {st.session_state.feature_1}")
+            
+            ax.scatter( 
+                        x = shap_values_unscaled[:, st.session_state.feature_1].data,
+                        y = shap_values_unscaled[:, st.session_state.feature_2].data,
+                        )
+            ax.set_xlabel(st.session_state.feature_1)
+            ax.set_ylabel(st.session_state.feature_2)
+            
+            st.pyplot(fig)
+         
 if __name__ == '__main__':
     
     st.set_page_config(layout="wide")
