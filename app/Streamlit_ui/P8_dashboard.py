@@ -183,7 +183,7 @@ def get_client_index(SK_ID_CURR, key_tab):
     return index
 
 @st.cache_data
-def render_shap_waterfall(SK_ID_CURR, key_tab, _shap_values_unscaled):
+def render_shap_waterfall(_shap_values_unscaled, SK_ID_CURR, key_tab):
 
     index = get_client_index(SK_ID_CURR, key_tab)
     
@@ -200,7 +200,7 @@ def render_violineplot(_all_data, feature, SK_ID_CURR) :
     # Client value
     client_value = _all_data.loc[_all_data["SK_ID_CURR"] == SK_ID_CURR, feature].values[0]
 
-    # Message
+    # Description du graphique
     st.write("Position du client au sein de l'ensemble des clients, la valeur de la feature du client est donné par le point rouge")
     
     fig, ax = plt.subplots(figsize=(4, 3))
@@ -212,6 +212,30 @@ def render_violineplot(_all_data, feature, SK_ID_CURR) :
     
     st.pyplot(fig, width="content")
 
+@st.cache_data
+def render_shap_scatter_plot(_shap_values_unscaled, SK_ID_CURR, key_tab, feature):
+
+    # Client value
+    index = get_client_index(SK_ID_CURR, key_tab)
+    
+    # Description du graphique
+    st.text(f"Lien entre {feature} et la valeurs de shap la valeurs du client est représenté par un point rouge")
+    
+    fig, ax = plt.subplots(figsize=(4, 3))
+            
+    ax.set_title(f"Valeur de shap VS feature {feature}")
+                
+    shap.plots.scatter(_shap_values_unscaled[:, feature],
+                       dot_size=3,
+                       ax=ax)
+    
+    ax.scatter(_shap_values_unscaled[index, feature].data,
+               _shap_values_unscaled[index, feature].values,
+               s = 3,
+               c = "red",
+                )
+                
+    st.pyplot(fig, width="content")
 #------------------------Main fonction--------------------------#
     
 def main():
@@ -354,7 +378,7 @@ def main():
         #st.pyplot(fig, width="content")
         #del ax, fig
 
-        render_shap_waterfall(SK_ID_CURR, key_tab, shap_values_unscaled)
+        render_shap_waterfall(shap_values_unscaled, SK_ID_CURR, key_tab )
         
 ##-------------------- Position du client par rapport au reste de la base de données     
         '''
@@ -372,23 +396,7 @@ def main():
             render_violineplot(all_data, feature, SK_ID_CURR)
 
         with right_column:
-            
-            st.text(f"Lien entre {feature} et la valeurs de shap la valeurs du client est représenté par un point rouge")
-
-            fig, ax = plt.subplots(figsize=(4, 3))
-        
-            ax.set_title(f"Valeur de shap VS feature {feature}")
-            
-            shap.plots.scatter(shap_values_unscaled[:, feature],
-                               dot_size=3,
-                               ax=ax)
-            ax.scatter(shap_values_unscaled[index, feature].data,
-                       shap_values_unscaled[index, feature].values,
-                       s = 3,
-                       c = "red",
-                       )
-            
-            st.pyplot(fig, width="content")
+            render_shap_scatter_plot(shap_values_unscaled, SK_ID_CURR, key_tab, feature)
 
 ##-------------------- Etude bivarié des variables
         '''
