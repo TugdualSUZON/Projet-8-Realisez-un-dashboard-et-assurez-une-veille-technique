@@ -193,18 +193,19 @@ def render_shap_waterfall(SK_ID_CURR, key_tab, _shap_values_unscaled):
             width=1400,
             height=500
            )
-
-def render_violineplot(all_data, feature, SK_ID_CURR) :
+    
+@st.cache_data
+def render_violineplot(_all_data, feature, SK_ID_CURR) :
 
     # Client value
-    client_value = all_data.loc[all_data["SK_ID_CURR"] == SK_ID_CURR, feature].values[0]
+    client_value = _all_data.loc[_all_data["SK_ID_CURR"] == SK_ID_CURR, feature].values[0]
 
     # Message
     st.write("Position du client au sein de l'ensemble des clients, la valeur de la feature du client est donné par le point rouge")
     
     fig, ax = plt.subplots(figsize=(4, 3))
     
-    sns.violinplot(all_data[feature], ax=ax)
+    sns.violinplot(_all_data[feature], ax=ax)
     sns.stripplot({0: client_value}, edgecolor='black', linewidth=1, palette=['red'], ax=ax)
 
     ax.set_title(f"Graphique de densité de la feature {feature}")
