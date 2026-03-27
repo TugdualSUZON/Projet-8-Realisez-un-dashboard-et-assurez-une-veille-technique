@@ -12,6 +12,8 @@ on:
       - "main"
     paths:
       - "app/mlflow_api/**"
+      
+  workflow_dispatch: # <-- permet de lancer manuellement depuis l'UI
 
 env:
   # Use docker.io for Docker Hub if empty
