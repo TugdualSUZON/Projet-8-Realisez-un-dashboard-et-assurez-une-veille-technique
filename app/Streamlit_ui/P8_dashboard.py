@@ -69,12 +69,12 @@ def load_shap_values(shap_pkl_path=r"./shap_values_unscaled.pkl"):
 @st.cache_data
 def load_data():
 
-    # Charger les données générale
-    ## Dataset d'entrainement complet ?
-    all_data = pd.read_csv(r"C:\Users\SUZON\OneDrive - CNR\Documents\Jupyter\Openclassrooms\Projets Openclassrooms\Projet-8-Realisez-un-dashboard-et-assurez-une-veille-technique\data\transformed\train_data_V1.csv")
-    
     ## Clé primaire et Valeurs de shap
     key_tab, shap_values_unscaled = load_shap_values()
+    
+    ## Consrtuire all_data à partir de l'objet shap
+    all_data = shap_values_unscaled[:, :].data
+    all_data = pd.DataFrame(all_data, columns=shap_values_unscaled.feature_names)
    
     return all_data, key_tab, shap_values_unscaled
 
@@ -312,9 +312,10 @@ def main():
             # Transformer le float produit par input_number en entier
             if SK_ID_CURR is not None :
                 SK_ID_CURR = int(SK_ID_CURR)
-
+                index = get_client_index(SK_ID_CURR, key_tab)
+                
                 # Vérifier que l'ID demander est dans le dataframe des données d'entraînement
-                if all_data.loc[all_data["SK_ID_CURR"] == SK_ID_CURR, :].empty:
+                if all_data.loc[index, :].empty:
                     SK_ID_CURR = None
                     st.write("ERREUR : Identifiant inconnu entrée un identifiant valide")
                 
@@ -329,19 +330,29 @@ def main():
             '''
             - Valeurs des features les plus importante
             '''
-            raw_main_features = copy.copy(all_data)
-            
+
             # Liste des colonnes à afficher
-            main_features = ["TARGET", "CODE_GENDER", "DAYS_BIRTH", "DAYS_EMPLOYED", "AMT_INCOME_TOTAL", "EXT_SOURCE_1", "EXT_SOURCE_2", "EXT_SOURCE_3"]
-            raw_main_features = raw_main_features.loc[raw_main_features["SK_ID_CURR"] == SK_ID_CURR, main_features]
-            # Filtrer le dataframe selon la liste des colonnes
-            raw_main_features = raw_main_features.loc[:, main_features]
-            # Pivoter le dataframe
-            raw_main_features = pd.melt(raw_main_features,
-                                        #id_vars="SK_ID_CURR",
-                                        value_vars=raw_main_features)
+            main_features = ["CODE_GENDER", "DAYS_BIRTH", "DAYS_EMPLOYED", "AMT_INCOME_TOTAL", "EXT_SOURCE_1", "EXT_SOURCE_2", "EXT_SOURCE_3"]
+            
+            # Estraire les données pour les feature les plus importantes et calculer des stats descriptive
+            extract = all_data.loc[:, main_features]
+            extract = pd.melt(extract, value_vars=extract)
+            extract = extract.groupby("variable").agg({'value' : ["mean", "median"]})                  
+
+            # Index du client
+            index = get_client_index(SK_ID_CURR, key_tab)
+            
+            # Extraire les valeurs des features pour le client
+            client_values = shap_values_unscaled[index, main_features].data
+            client_values = pd.DataFrame([client_values], columns = main_features)
+            client_values = pd.melt(client_values, value_vars=client_values)
+            client_values = client_values.set_index("variable")
+
+            # Coller les morceau
+            features_values_sumup = pd.concat([client_values, extract], axis=1)
+            
             # Afficher le dataframe
-            st.dataframe(raw_main_features)
+            st.dataframe(features_values_sumup)
             
         else :
             '''
@@ -396,7 +407,7 @@ def main():
         #index = key_tab.loc[mask, :].index[0]
     
         # Feature importance local pour un client
-       # shap.plots.waterfall(shap_values_unscaled[index], show=False)
+        #shap.plots.waterfall(shap_values_unscaled[index], show=False)
     
         #st.pyplot(fig, width="content")
         #del ax, fig
