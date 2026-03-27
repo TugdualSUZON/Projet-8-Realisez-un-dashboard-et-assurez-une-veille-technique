@@ -270,7 +270,7 @@ def main():
     '''
     
 #------------------------Charger des données--------------------------#
-    #all_data, key_tab, shap_values_unscaled = load_data()
+    all_data, key_tab, shap_values_unscaled = load_data()
 
 #------------------------Haut de page choix du client--------------------------#
     # Haut de page, deux colonnes, une pour sélectionner un client ou déposer un fichier, l'autre pour afficher les valeurs principale de ce client
