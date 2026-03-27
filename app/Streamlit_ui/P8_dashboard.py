@@ -236,6 +236,30 @@ def render_shap_scatter_plot(_shap_values_unscaled, SK_ID_CURR, key_tab, feature
                 )
                 
     st.pyplot(fig, width="content")
+
+@st.cache_data
+def render_bivariate_scatterplot(_shap_values_unscaled, feature_1, feature_2):
+            
+    # Description du graphiques
+    st.write(f"Nuage de point montrant le lien entre deux features {feature_1} vs {feature_2}")
+
+    # Produire le graphique
+    fig, ax = plt.subplots(figsize=(6,6))
+            
+    ax.set_title(f"Variation de {feature_2} en fonction de {feature_1}")
+            
+    ax.scatter( 
+                x = _shap_values_unscaled[:, feature_1].data,
+                y = _shap_values_unscaled[:, feature_2].data,
+                )
+    ax.set_xlabel(feature_1)
+    ax.set_ylabel(feature_2)
+            
+    st.pyplot(fig, 
+              width="content"
+             )
+
+
 #------------------------Main fonction--------------------------#
     
 def main():
@@ -383,19 +407,26 @@ def main():
         '''
         ## 3) **Etudier la place du clients pour certaine feature**
         '''
-        
-        feature = st.selectbox("Choisir une feature", main_features)
+        # Utiliser la persistance des valeurs de variable entre les runs
+        if "feature" not in st.session_state:
+            st.session_state["feature"] = None
+            
+        st.session_state.feature = st.selectbox("Choisir une feature", main_features,  index=None)
         
         index = get_client_index(SK_ID_CURR, key_tab)
         
         ## Définir deux colonnes
         left_column, right_column = st.columns(2)
-        
-        with left_column:
-            render_violineplot(all_data, feature, SK_ID_CURR)
 
-        with right_column:
-            render_shap_scatter_plot(shap_values_unscaled, SK_ID_CURR, key_tab, feature)
+        if st.session_state.feature == None:
+            st.write("Renseigner le nom de la feature pour afficher les graphiques")
+
+        else :
+            with left_column:
+                render_violineplot(all_data, st.session_state.feature, SK_ID_CURR)
+    
+            with right_column:
+                render_shap_scatter_plot(shap_values_unscaled, SK_ID_CURR, key_tab, st.session_state.feature)
 
 ##-------------------- Etude bivarié des variables
         '''
@@ -439,19 +470,7 @@ def main():
 
         ## Afficher le graphique
         else :
-            fig, ax = plt.subplots(
-                
-            )
-            ax.set_title(f"Variation de {st.session_state.feature_2} en fonction de {st.session_state.feature_1}")
-            
-            ax.scatter( 
-                        x = shap_values_unscaled[:, st.session_state.feature_1].data,
-                        y = shap_values_unscaled[:, st.session_state.feature_2].data,
-                        )
-            ax.set_xlabel(st.session_state.feature_1)
-            ax.set_ylabel(st.session_state.feature_2)
-            
-            st.pyplot(fig)
+            render_bivariate_scatterplot(shap_values_unscaled, st.session_state.feature_1, st.session_state.feature_2)
          
 if __name__ == '__main__':
     
