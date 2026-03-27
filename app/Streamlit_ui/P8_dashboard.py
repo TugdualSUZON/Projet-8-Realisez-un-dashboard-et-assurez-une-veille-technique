@@ -331,7 +331,6 @@ def main():
     
 ##-------------------- Prédire la probabilité du client en fonction des données d'entré, interrogation de l'API       
     predict_btn = st.button('Prédire')
-    feature_importance_btn = st.button('Afficher les graph de shap')
     
     if predict_btn:
         
@@ -415,12 +414,14 @@ def main():
 
         ## définir la valeurs de feature_1
         st.session_state.feature_1 = st.selectbox("Choisir une feature X", main_features, index=None, key="f1")
-        
+
+        ## Empecher l'affectation de la feature 2 si feature 1 n'est pas affecté.
         if st.session_state.feature_1 == None:
             feature_2_disabled = True
         else :
+            ## Permettre l'affecation de feature 2
             feature_2_disabled = False
-            ## retirer la valeurs de feature_1 de la liste de séléction de feature 2 pour éviter qu'il soit identique
+            ## Retirer la valeurs de feature_1 de la liste de séléction de feature 2 pour éviter qu'il soit identique
             list_feature_2.remove(st.session_state.feature_1)
             
         ## définir la valeurs de feature_2
@@ -429,12 +430,12 @@ def main():
         ## Vérifier que feature_1 a été renseigné
         if st.session_state.feature_1 == None :
             st.write("La valeurs de la première variable X n'est pas renseigner")
-            st.stop()
+            #st.stop()
 
         ## Vérifier que feature_2 a été renseigné
         elif st.session_state.feature_2 == None :
             st.write("La valeurs de la deuxième variable Y n'est pas renseigner")
-            st.stop()
+            #st.stop()
 
         ## Afficher le graphique
         else :
