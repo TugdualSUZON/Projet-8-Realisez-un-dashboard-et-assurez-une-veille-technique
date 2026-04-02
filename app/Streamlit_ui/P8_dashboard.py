@@ -22,7 +22,7 @@ from streamlit_shap import st_shap # https://github.com/snehankekre/streamlit-sh
 def request_prediction(df):
     # donner l'URL
     ## Fonctionnement tout en local
-    # MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
+    #MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
 
     ## Fonctionnement en loca et serveur cloud
     MLFLOW_URL = "https://predict-client-payment-main.onrender.com"
@@ -145,12 +145,12 @@ def render_threshold_value(value) :
     ax.axvline(x=threshold, color="k", linestyle="-", linewidth=2, label=f"Seuil (t) = {threshold:.2f}")
     
     # Tracer la ligne verticale de la valeur (trait bleu plein)
-    ax.axvline(x=value, color="k", linestyle="-", linewidth=3, label=f"Score client (v) = {value:.2f}")
+    ax.axvline(x=value, color="b", linestyle="-", linewidth=2, label=f"Score client (v) = {value:.2f}")
     
     # Ajouter annotations textuelles au-dessus des lignes
     # Positionner un peu au-dessus de la barre (y ~ 1.05)
-    ax.text(threshold, 1.05, f"seuil = {threshold:.2f}", ha="center", va="bottom", fontsize=10, color="k")
-    ax.text(value, 1.05, f"score client = {value:.2f}", ha="center", va="bottom", fontsize=10, color="k")
+    ax.text(threshold, 1.3, f"seuil = {threshold:.2f}", ha="center", va="bottom", fontsize=10, color="k")
+    ax.text(value, 1.03, f"score client = {value:.2f}", ha="center", va="bottom", fontsize=10, color="b")
     
     # Ajuster l'affichage
     plt.tight_layout()
@@ -159,7 +159,7 @@ def render_threshold_value(value) :
     st.pyplot(fig)
     
     st.markdown(
-        "Aide sous le graphique "
+        "Le score client représente la propabilté que le client rembourse éfféctivement le prêt qui lui sera accordé"
     )
     
 @st.cache_data
@@ -195,10 +195,13 @@ def render_shap_waterfall(_shap_values_unscaled, SK_ID_CURR, key_tab):
            )
     
 @st.cache_data
-def render_violineplot(_all_data, feature, SK_ID_CURR) :
-
+def render_violineplot(_all_data, key_tab, feature, SK_ID_CURR) :
+    
+    # Index du client
+    index = get_client_index(SK_ID_CURR, key_tab)
+    
     # Client value
-    client_value = _all_data.loc[_all_data["SK_ID_CURR"] == SK_ID_CURR, feature].values[0]
+    client_value = _all_data.loc[index, feature]
 
     # Description du graphique
     st.write("Position du client au sein de l'ensemble des clients, la valeur de la feature du client est donné par le point rouge")
@@ -343,8 +346,9 @@ def main():
             index = get_client_index(SK_ID_CURR, key_tab)
             
             # Extraire les valeurs des features pour le client
-            client_values = shap_values_unscaled[index, main_features].data
-            client_values = pd.DataFrame([client_values], columns = main_features)
+            all_client_values = shap_values_unscaled[index, :].data
+            all_client_values = pd.DataFrame([all_client_values], columns = shap_values_unscaled.feature_names)
+            client_values = all_client_values[main_features]
             client_values = pd.melt(client_values, value_vars=client_values)
             client_values = client_values.set_index("variable")
 
@@ -369,20 +373,29 @@ def main():
     
     if predict_btn:
         
-        #pred = None
-        #response = None
-        #response, pred_dict = request_prediction(df)
-    
-        #pred = pred_dict["predictions"][0]
-        #if pred == 0:
-            #st.write(f"Le client {SK_ID_CURR} appartient a la catégorie 0, le modèle prévoit qu'il remboursera son crédit"
-                #)
-        #elif pred == 1:
+        pred = None
+        response = None
+        response, pred_dict = request_prediction(all_client_values)
+        
+        # Gerer la réponse du serveur
+        if response == 200 :
+            st.write(f"La requête au serveur a fonctionnée")
+
+            # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 0 vas rembourser sont crédit
+            pred = pred_dict["predictions"][0][0]
+            #if pred == 0:
+                #st.write(f"Le client {SK_ID_CURR} appartient a la catégorie 0, le modèle prévoit qu'il remboursera son crédit"
+                    #)
+            #elif pred == 1:
             #st.write(f"Le client {SK_ID_CURR} appartient a la catégorie 1, le modèle prévoit qu'il ne remboursera pas son crédit"
                 #)
-        #st.write(f"Réponse de l'API {response}")
-        
-        render_threshold_value(0.20)
+            render_threshold_value(pred)
+            
+        elif response == 400:
+            st.write("La requête au modèle n'a pas marché : Bad Request")
+            
+        else:
+            st.write(f"!! Code résponse inconnue: {response}")
 
 # Graphiques liée au clients
     # Uniquement si un client a été sélectionné
@@ -434,7 +447,7 @@ def main():
 
         else :
             with left_column:
-                render_violineplot(all_data, st.session_state.feature, SK_ID_CURR)
+                render_violineplot(all_data, key_tab, st.session_state.feature, SK_ID_CURR)
     
             with right_column:
                 render_shap_scatter_plot(shap_values_unscaled, SK_ID_CURR, key_tab, st.session_state.feature)
