@@ -159,7 +159,7 @@ def render_threshold_value(value) :
     st.pyplot(fig)
     
     st.markdown(
-        "Aide sous le graphique "
+        "Le score client représente la propabilté que le client rembourse éfféctivement le prêt qui lui sera accordé"
     )
     
 @st.cache_data
@@ -195,10 +195,13 @@ def render_shap_waterfall(_shap_values_unscaled, SK_ID_CURR, key_tab):
            )
     
 @st.cache_data
-def render_violineplot(_all_data, feature, SK_ID_CURR) :
-
+def render_violineplot(_all_data, key_tab, feature, SK_ID_CURR) :
+    
+    # Index du client
+    index = get_client_index(SK_ID_CURR, key_tab)
+    
     # Client value
-    client_value = _all_data.loc[_all_data["SK_ID_CURR"] == SK_ID_CURR, feature].values[0]
+    client_value = _all_data.loc[index, feature]
 
     # Description du graphique
     st.write("Position du client au sein de l'ensemble des clients, la valeur de la feature du client est donné par le point rouge")
@@ -373,14 +376,13 @@ def main():
         pred = None
         response = None
         response, pred_dict = request_prediction(all_client_values)
-        st.write(response)
         
         # Gerer la réponse du serveur
         if response == 200 :
             st.write(f"La requête au serveur a fonctionnée")
 
             # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 0 vas rembourser sont crédit
-            pred = pred_dict[1]["predictions"][0][0]
+            pred = pred_dict["predictions"][0][0]
             #if pred == 0:
                 #st.write(f"Le client {SK_ID_CURR} appartient a la catégorie 0, le modèle prévoit qu'il remboursera son crédit"
                     #)
@@ -393,7 +395,7 @@ def main():
             st.write("La requête au modèle n'a pas marché : Bad Request")
             
         else:
-            st.write(f"!! Code résponse inconnue")
+            st.write(f"!! Code résponse inconnue: {response}")
 
 # Graphiques liée au clients
     # Uniquement si un client a été sélectionné
@@ -445,7 +447,7 @@ def main():
 
         else :
             with left_column:
-                render_violineplot(all_data, st.session_state.feature, SK_ID_CURR)
+                render_violineplot(all_data, key_tab, st.session_state.feature, SK_ID_CURR)
     
             with right_column:
                 render_shap_scatter_plot(shap_values_unscaled, SK_ID_CURR, key_tab, st.session_state.feature)
