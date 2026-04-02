@@ -22,10 +22,10 @@ from streamlit_shap import st_shap # https://github.com/snehankekre/streamlit-sh
 def request_prediction(df):
     # donner l'URL
     ## Fonctionnement tout en local
-    MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
+    #MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
 
     ## Fonctionnement en loca et serveur cloud
-    #MLFLOW_URL = "https://predict-client-payment-main.onrender.com"
+    MLFLOW_URL = "https://predict-client-payment-main.onrender.com"
     
     ## fonctionnement tous cloud
     #MLFLOW_URL = os.getenv("MLFLOW_URL")
