@@ -3,6 +3,7 @@ channels:
 dependencies:
 - python=3.11.9
 - pip:
+  - starlette==0.52.1
   - pandas==2.3.3
   - numpy==1.26.4
   - mlflow==3.7.0
@@ -11,4 +12,5 @@ dependencies:
   - cloudpickle==3.1.2
   - psutil==7.2.2
   - pyarrow==12.0.0
-name: projet_7_python_3_11_9
+  - pyarrow_hotfix
+name: projet_8_python_3_11_9
