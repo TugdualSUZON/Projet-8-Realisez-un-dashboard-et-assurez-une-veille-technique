@@ -22,10 +22,10 @@ from streamlit_shap import st_shap # https://github.com/snehankekre/streamlit-sh
 def request_prediction(df):
     # donner l'URL
     ## Fonctionnement tout en local
-    # MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
+    MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
 
     ## Fonctionnement en loca et serveur cloud
-    MLFLOW_URL = "https://predict-client-payment-main.onrender.com"
+    # MLFLOW_URL = "https://predict-client-payment-main.onrender.com"
     
     ## fonctionnement tous cloud
     #MLFLOW_URL = os.getenv("MLFLOW_URL")
@@ -47,7 +47,7 @@ def request_prediction(df):
     return response.status_code, response.json()
 
 @st.cache_data    
-def load_shap_values(shap_pkl_path=r"./shap_values_unscaled.pkl"):
+def load_shap_values(shap_pkl_path=r"./shap_values_uncasled.pkl"):
     
     # Charger le fichier des valeurs de shap
     with open(shap_pkl_path, "rb") as f :
@@ -368,21 +368,23 @@ def main():
     predict_btn = st.button('Prédire')
     
     if predict_btn:
-        
-        #pred = None
-        #response = None
-        #response, pred_dict = request_prediction(df)
+        st.write(index)
+        st.dataframe(all_data.loc[index, :].to_frame()) # Les nom des feature sont les index dans ce cas la
+        pred = None
+        response = None
+        response, pred_dict = request_prediction(all_data.loc[index, :])
     
-        #pred = pred_dict["predictions"][0]
+        pred = pred_dict["predictions"][0]
         #if pred == 0:
             #st.write(f"Le client {SK_ID_CURR} appartient a la catégorie 0, le modèle prévoit qu'il remboursera son crédit"
-                #)
+        #        #)
         #elif pred == 1:
-            #st.write(f"Le client {SK_ID_CURR} appartient a la catégorie 1, le modèle prévoit qu'il ne remboursera pas son crédit"
+        #    #st.write(f"Le client {SK_ID_CURR} appartient a la catégorie 1, le modèle prévoit qu'il ne remboursera pas son crédit"
                 #)
         #st.write(f"Réponse de l'API {response}")
         
-        render_threshold_value(0.20)
+        render_threshold_value(pred)
+        #render_threshold_value(0.20)
 
 # Graphiques liée au clients
     # Uniquement si un client a été sélectionné
