@@ -505,6 +505,6 @@ if __name__ == '__main__':
     st.set_page_config(layout="wide")
     
     # Définir le repertoire actif
-    os.chdir(r"C:\Users\SUZON\OneDrive - CNR\Documents\Jupyter\Openclassrooms\Projets Openclassrooms\Projet-8-Realisez-un-dashboard-et-assurez-une-veille-technique\app\Streamlit_ui")
+    # os.chdir(r"C:\Users\SUZON\OneDrive - CNR\Documents\Jupyter\Openclassrooms\Projets Openclassrooms\Projet-8-Realisez-un-dashboard-et-assurez-une-veille-technique\app\Streamlit_ui")
     
     main()
