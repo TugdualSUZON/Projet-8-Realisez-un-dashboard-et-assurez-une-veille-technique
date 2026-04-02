@@ -25,7 +25,7 @@ def request_prediction(df):
     #MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
 
     ## Fonctionnement en loca et serveur cloud
-    MLFLOW_URL = "https://predict-client-payment-main.onrender.com"
+    MLFLOW_URL = "https://predict-client-payment-sha256.onrender.com"
     
     ## fonctionnement tous cloud
     #MLFLOW_URL = os.getenv("MLFLOW_URL")
@@ -48,7 +48,11 @@ def request_prediction(df):
 
 @st.cache_data    
 def load_shap_values(shap_pkl_path=r"./shap_values_unscaled.pkl"):
-    
+
+    # Dans le cas du déploiment sur streamlit cloud
+    if st.secrets["SHAP_PKL_PATH"]:
+        shap_pkl_path = st.secrets["SHAP_PKL_PATH"]
+        
     # Charger le fichier des valeurs de shap
     with open(shap_pkl_path, "rb") as f :
         unpickeled_object = pickle.load(f)
