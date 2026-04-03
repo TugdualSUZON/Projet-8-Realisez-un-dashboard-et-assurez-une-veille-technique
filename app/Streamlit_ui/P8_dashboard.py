@@ -83,6 +83,7 @@ def load_data():
     return all_data, key_tab, shap_values_unscaled
 
 #------------------------Produire les graphiques--------------------------#
+@st.cache_data
 def render_threshold_value(value) :
     
     # Style seaborn pour de belles couleurs par défaut
@@ -157,12 +158,12 @@ def render_threshold_value(value) :
     ax.text(value, 1.03, f"score client = {value:.2f}", ha="center", va="bottom", fontsize=10, color="b")
     
     # Ajuster l'affichage
-    #plt.tight_layout()
+    plt.tight_layout()
     
     # Afficher la figure dans Streamlit
-    st.pyplot(fig, clear_figure=True)
+    st.pyplot(fig)
 
-    del fig
+    plt.close(fig)
     
     st.markdown('''Le score client représente la probabilité que le client ne rembourse pas le prêt qui lui sera accordé.  
     - Proche de 0 le client a de grande chance de rembourser sont prêt.  
