@@ -94,8 +94,8 @@ def render_threshold_value(value) :
     threshold = 0.5
     
     # Options de couleur pour les deux zones (avant/après seuil)
-    cmap_left = plt.get_cmap("YlOrRd_r")   # couleur pour [0, t] _r pour inverse la gamme
-    cmap_right = plt.get_cmap("YlGn")  # couleur pour [t, 1]
+    cmap_left = plt.get_cmap("YlGn_r")  # couleur pour [t, 1]
+    cmap_right = plt.get_cmap("YlOrRd")   # couleur pour [0, t] _r pour inverse la gamme
     
     # Résolution horizontale (nombre de colonnes dans la barre)
     N = 512
@@ -143,7 +143,7 @@ def render_threshold_value(value) :
     # Supprimer axes inutiles
     ax.set_yticks([])
     ax.set_xlim(0, 1)
-    ax.set_xlabel("Probabilité d'acceptation du dossier")
+    ax.set_xlabel("Probabilité de refuser le prêt")
     
     # Tracer la ligne verticale du seuil (trait noir pointillé)
     ax.axvline(x=threshold, color="k", linestyle="-", linewidth=2, label=f"Seuil (t) = {threshold:.2f}")
@@ -157,14 +157,16 @@ def render_threshold_value(value) :
     ax.text(value, 1.03, f"score client = {value:.2f}", ha="center", va="bottom", fontsize=10, color="b")
     
     # Ajuster l'affichage
-    plt.tight_layout()
+    #plt.tight_layout()
     
     # Afficher la figure dans Streamlit
-    st.pyplot(fig)
+    st.pyplot(fig, clear_figure=True)
+
+    del fig
     
-    st.markdown(
-        "Le score client représente la propabilté que le client rembourse éfféctivement le prêt qui lui sera accordé"
-    )
+    st.markdown('''Le score client représente la probabilité que le client ne rembourse pas le prêt qui lui sera accordé.  
+    - Proche de 0 le client a de grande chance de rembourser sont prêt.  
+    - Proche de 1 le client à de grande chance de ne pas rembourser sont prêt.''')
     
 @st.cache_data
 def render_feature_importance(_shap_values_unscaled) :
@@ -186,7 +188,7 @@ def get_client_index(SK_ID_CURR, key_tab):
         index = key_tab.loc[mask, :].index[0]
 
     except:
-        index = None
+        index = "error"
 
     return index
 
@@ -201,6 +203,10 @@ def render_shap_waterfall(_shap_values_unscaled, SK_ID_CURR, key_tab):
             width=1400,
             height=500
            )
+    
+    st.markdown('''La valeurs f est un logarithme de la probabilité.  
+    - Une valeur négative indique une probabilité de non remboursement inférieur à 50%.  
+    - A l'inverse une valeurs positive indique une propbabilté de non remboursement supérieur à 50%.''')
     
 @st.cache_data
 def render_violineplot(_all_data, key_tab, feature, SK_ID_CURR) :
@@ -326,8 +332,9 @@ def main():
                 index = get_client_index(SK_ID_CURR, key_tab)
                 
                 # Vérifier que l'ID demander est dans le dataframe des données d'entraînement
-                if index :
+                if index == "error" :
                     st.write("ERREUR : Identifiant inconnu entrée un identifiant valide")
+                    st.stop()
                 
 
 ##-------------------- Détaille des valeurs des features les plus importante pour le client sélectionné
@@ -388,8 +395,8 @@ def main():
         if response == 200 :
             st.write(f"La requête au serveur a fonctionnée")
 
-            # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 0 vas rembourser sont crédit
-            pred = pred_dict["predictions"][0][0]
+            # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 1 ne vas pas rembourser sont crédit
+            pred = pred_dict["predictions"][0][1]
             #if pred == 0:
                 #st.write(f"Le client {SK_ID_CURR} appartient a la catégorie 0, le modèle prévoit qu'il remboursera son crédit"
                     #)
