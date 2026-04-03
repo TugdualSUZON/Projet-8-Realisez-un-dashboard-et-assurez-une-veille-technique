@@ -179,10 +179,14 @@ def render_feature_importance(_shap_values_unscaled) :
         st.pyplot(fig, width="content")
 
 def get_client_index(SK_ID_CURR, key_tab):
-    
-    # Relier l'id client avec l'index du fichier de shap_values_unscaled
-    mask = key_tab["SK_ID_CURR"] == SK_ID_CURR
-    index = key_tab.loc[mask, :].index[0]
+
+    try:
+        # Relier l'id client avec l'index du fichier de shap_values_unscaled
+        mask = key_tab["SK_ID_CURR"] == SK_ID_CURR
+        index = key_tab.loc[mask, :].index[0]
+
+    except:
+        index = None
 
     return index
 
@@ -310,7 +314,7 @@ def main():
 
         ## Depuis la base de données client
         if uploaded_file == None :
-            SK_ID_CURR = st.number_input("- Définiser un identifiant client ici :", 
+            SK_ID_CURR = st.number_input("- Définiser un identifiant client ici [100003 ; 105003] :", 
                                          value=None,
                                          format="%0f",
                                          placeholder="Identifiant client : SK_ID_CURR"
@@ -322,8 +326,7 @@ def main():
                 index = get_client_index(SK_ID_CURR, key_tab)
                 
                 # Vérifier que l'ID demander est dans le dataframe des données d'entraînement
-                if all_data.loc[index, :].empty:
-                    SK_ID_CURR = None
+                if index :
                     st.write("ERREUR : Identifiant inconnu entrée un identifiant valide")
                 
 
