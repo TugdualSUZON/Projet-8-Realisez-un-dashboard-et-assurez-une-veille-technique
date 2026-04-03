@@ -256,8 +256,11 @@ def render_shap_scatter_plot(_shap_values_unscaled, SK_ID_CURR, key_tab, feature
     st.pyplot(fig, width="content")
 
 @st.cache_data
-def render_bivariate_scatterplot(_shap_values_unscaled, feature_1, feature_2):
-            
+def render_bivariate_scatterplot(_shap_values_unscaled, SK_ID_CURR, key_tab, feature_1, feature_2):
+    
+    # Client value
+    index = get_client_index(SK_ID_CURR, key_tab)
+    
     # Description du graphiques
     st.write(f"Nuage de point montrant le lien entre deux features {feature_1} vs {feature_2}")
 
@@ -269,9 +272,17 @@ def render_bivariate_scatterplot(_shap_values_unscaled, feature_1, feature_2):
     ax.scatter( 
                 x = _shap_values_unscaled[:, feature_1].data,
                 y = _shap_values_unscaled[:, feature_2].data,
+                s = 3
                 )
+    
     ax.set_xlabel(feature_1)
     ax.set_ylabel(feature_2)
+
+    ax.scatter(x = _shap_values_unscaled[index, feature_1].data,
+               y = _shap_values_unscaled[index, feature_2].data,
+               s = 3,
+               c = "red",
+                )
             
     st.pyplot(fig, 
               width="content"
@@ -509,13 +520,13 @@ def main():
 
         ## Afficher le graphique
         else :
-            render_bivariate_scatterplot(shap_values_unscaled, st.session_state.feature_1, st.session_state.feature_2)
+            render_bivariate_scatterplot(shap_values_unscaled, SK_ID_CURR, key_tab, st.session_state.feature_1, st.session_state.feature_2)
          
 if __name__ == '__main__':
     
     st.set_page_config(layout="wide")
     
     # Définir le repertoire actif
-    # os.chdir(r"C:\Users\SUZON\OneDrive - CNR\Documents\Jupyter\Openclassrooms\Projets Openclassrooms\Projet-8-Realisez-un-dashboard-et-assurez-une-veille-technique\app\Streamlit_ui")
+    #os.chdir(r"C:\Users\SUZON\OneDrive - CNR\Documents\Jupyter\Openclassrooms\Projets Openclassrooms\Projet-8-Realisez-un-dashboard-et-assurez-une-veille-technique\app\Streamlit_ui")
     
     main()
