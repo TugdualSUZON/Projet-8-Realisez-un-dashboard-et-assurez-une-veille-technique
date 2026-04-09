@@ -13,3 +13,4 @@ data/results/random_forest_baseline.csv
 /app/mlflow_api/mlflow_to_deploy/.ipynb_checkpoints
 /app/Streamlit_ui/.ipynb_checkpoints
 /data/modeles
+app/Streamlit_ui/.streamlit/secrets.toml

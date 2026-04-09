@@ -18,33 +18,6 @@ from streamlit_shap import st_shap # https://github.com/snehankekre/streamlit-sh
 # Fonctions
 
 #------------------------Charger des données--------------------------#
-@st.cache_data
-def request_prediction(df):
-    # donner l'URL
-    ## Fonctionnement tout en local
-    #MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
-
-    ## Fonctionnement en loca et serveur cloud
-    MLFLOW_URL = "https://predict-client-payment-sha256.onrender.com"
-    
-    ## fonctionnement tous cloud
-    #MLFLOW_URL = os.getenv("MLFLOW_URL")
-
-    # Formater le csv pour l'envoi au modèle
-    df_line = df.iloc[[0], :]  # votre ligne
-    csv_buffer = StringIO()
-    df_line.to_csv(csv_buffer, index=False)
-    csv_buffer.seek(0) # Remettre le pointer à 0 suite à l'écriture
-    #csv_data = csv_buffer.getvalue() # Pour voir ce qu'il y a dans le fichier csv produit, peux aussi être passer à request
-    
-    response = requests.post(
-        url=f"{MLFLOW_URL}/invocations", 
-        data=csv_buffer,
-        headers={"Content-Type": "text/csv"},
-        verify=False
-    )
-    
-    return response.status_code, response.json()
 
 @st.cache_data    
 def load_shap_values(shap_pkl_path=r"./shap_values_unscaled.pkl"):
@@ -82,6 +55,61 @@ def load_data():
    
     return all_data, key_tab, shap_values_unscaled
 
+def click_button():
+        st.session_state.clicked = True
+
+#------------------------Requet_au_sevice_modele------------------------
+
+def request_ping():
+    # donner l'URL
+    ## Fonctionnement tout en local
+    #MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
+
+    ## Fonctionnement en loca et serveur cloud
+    MLFLOW_URL = "https://predict-client-payment-sha256.onrender.com"
+    
+    ## fonctionnement tous cloud
+    #MLFLOW_URL = os.getenv("MLFLOW_URL")
+
+    try:
+        response = requests.get(
+                                url=f"{MLFLOW_URL}/ping",
+                                verify=False,
+                                timeout=5
+                                )
+            
+        return response.status_code, response.text
+    except Exception as e:
+        return None, str(e)
+
+@st.cache_data
+def request_prediction(df):
+    # donner l'URL
+    ## Fonctionnement tout en local
+    #MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
+
+    ## Fonctionnement en loca et serveur cloud
+    MLFLOW_URL = "https://predict-client-payment-sha256.onrender.com"
+    
+    ## fonctionnement tous cloud
+    #MLFLOW_URL = os.getenv("MLFLOW_URL")
+
+    # Formater le csv pour l'envoi au modèle
+    df_line = df.iloc[[0], :]  # votre ligne
+    csv_buffer = StringIO()
+    df_line.to_csv(csv_buffer, index=False)
+    csv_buffer.seek(0) # Remettre le pointer à 0 suite à l'écriture
+    #csv_data = csv_buffer.getvalue() # Pour voir ce qu'il y a dans le fichier csv produit, peux aussi être passer à request
+    
+    response = requests.post(
+        url=f"{MLFLOW_URL}/invocations", 
+        data=csv_buffer,
+        headers={"Content-Type": "text/csv"},
+        verify=False
+    )
+    
+    return response.status_code, response.json()
+    
 #------------------------Produire les graphiques--------------------------#
 def render_threshold_value(value) :
     
@@ -372,10 +400,28 @@ def main():
     del left_column, right_column
 
     
-##-------------------- Prédire la probabilité du client en fonction des données d'entré, interrogation de l'API       
-    predict_btn = st.button('Prédire')
+##-------------------- Prédire la probabilité du client en fonction des données d'entré, interrogation de l'API
+
+    # Tester la disponibilté de l'API du model
+    if st.button('Vérifier la disponibilté du serveur'):
+        
+        ping_response, ping_text = request_ping()
+
+        if ping_response == 200 :
+            st.write(f"Le serveur est actif")
+        else :
+            st.write(f"Le serveur n'est pas actif")
+            st.write(f"reponse : {ping_response}, text : {ping_text}")
+        
+    # Utiliser la persistance des valeurs de variable entre les runs
+    if "predict_btn" not in st.session_state:
+        st.session_state["predict_btn"] = False
+
     
-    if predict_btn:
+    
+    st.button('Prédire', on_click=click_button)
+    
+    if st.session_state.predict_btn :
         
         pred = None
         response = None
@@ -383,7 +429,6 @@ def main():
         
         # Gerer la réponse du serveur
         if response == 200 :
-            st.write(f"La requête au serveur a fonctionnée")
 
             # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 0 vas rembourser sont crédit
             pred = pred_dict["predictions"][0][0]
