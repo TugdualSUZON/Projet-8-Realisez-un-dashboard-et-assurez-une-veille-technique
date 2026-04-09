@@ -229,9 +229,6 @@ def render_shap_waterfall(_shap_values_unscaled, SK_ID_CURR, key_tab):
 
     index = get_client_index(SK_ID_CURR, key_tab)
     
-    # Client value
-    client_value = _all_data.loc[index, feature]
-    
     # Feature importance local pour un client
     st.write(f"-Feature importance local du client {SK_ID_CURR}")
     st_shap(shap.waterfall_plot(_shap_values_unscaled[index]),
