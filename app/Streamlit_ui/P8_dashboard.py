@@ -20,9 +20,9 @@ from streamlit_shap import st_shap # https://github.com/snehankekre/streamlit-sh
 #------------------------Charger des données--------------------------#
 
 @st.cache_data    
-def load_shap_values(shap_pkl_path=r"./shap_values_unscaled.pkl"):
+def load_shap_values():
 
-    # Dans le cas du déploiment sur streamlit cloud
+    # Utilisation d'un secret pour donner le chemin d'accées au fichier de données
     if st.secrets["SHAP_PKL_PATH"]:
         shap_pkl_path = st.secrets["SHAP_PKL_PATH"]
         
@@ -608,8 +608,5 @@ def main():
 if __name__ == '__main__':
     
     st.set_page_config(layout="wide")
-    
-    # Définir le repertoire actif
-    os.chdir(r"C:\Users\SUZON\OneDrive - CNR\Documents\Jupyter\Openclassrooms\Projets Openclassrooms\Projet-8-Realisez-un-dashboard-et-assurez-une-veille-technique\app\Streamlit_ui")
     
     main()
