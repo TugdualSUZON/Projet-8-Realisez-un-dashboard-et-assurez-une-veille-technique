@@ -463,7 +463,7 @@ def main():
             if response == 200 :
                 
                 # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 0 vas rembourser sont crédit
-                pred = pred_dict["predictions"][0][0]
+                pred = pred_dict["predictions"][0][1]
 
                 # Produire le graphique
                 render_threshold_value(pred)
@@ -518,7 +518,7 @@ def main():
             if response_bis == 200 :
     
                 # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 0 vas rembourser sont crédit
-                pred_bis = pred_dict_bis["predictions"][0][0]
+                pred_bis = pred_dict_bis["predictions"][0][1]
                 
                 # Produire le graphique
                 render_threshold_value(pred_bis)
