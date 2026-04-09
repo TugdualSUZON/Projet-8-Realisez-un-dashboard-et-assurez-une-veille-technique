@@ -376,10 +376,10 @@ def main():
                 SK_ID_CURR = int(SK_ID_CURR)
                 index = get_client_index(SK_ID_CURR, key_tab)
 
-            # Vérifier que l'ID demander est dans le dataframe des données d'entraînement
-            if index == "error" :
-                st.write("ERREUR : Identifiant inconnu entrée un identifiant valide")
-                st.stop()
+                # Vérifier que l'ID demander est dans le dataframe des données d'entraînement
+                if index == "error" :
+                    st.write("ERREUR : Identifiant inconnu entrée un identifiant valide")
+                    st.stop()
                 
 ##-------------------- Détaille des valeurs des features les plus importante pour le client sélectionné
     with right_column:
