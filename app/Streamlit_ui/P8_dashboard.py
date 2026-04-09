@@ -18,41 +18,14 @@ from streamlit_shap import st_shap # https://github.com/snehankekre/streamlit-sh
 # Fonctions
 
 #------------------------Charger des données--------------------------#
-@st.cache_data
-def request_prediction(df):
-    # donner l'URL
-    ## Fonctionnement tout en local
-    #MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
-
-    ## Fonctionnement en loca et serveur cloud
-    MLFLOW_URL = "https://predict-client-payment-sha256.onrender.com"
-    
-    ## fonctionnement tous cloud
-    #MLFLOW_URL = os.getenv("MLFLOW_URL")
-
-    # Formater le csv pour l'envoi au modèle
-    df_line = df.iloc[[0], :]  # votre ligne
-    csv_buffer = StringIO()
-    df_line.to_csv(csv_buffer, index=False)
-    csv_buffer.seek(0) # Remettre le pointer à 0 suite à l'écriture
-    #csv_data = csv_buffer.getvalue() # Pour voir ce qu'il y a dans le fichier csv produit, peux aussi être passer à request
-    
-    response = requests.post(
-        url=f"{MLFLOW_URL}/invocations", 
-        data=csv_buffer,
-        headers={"Content-Type": "text/csv"},
-        verify=False
-    )
-    
-    return response.status_code, response.json()
 
 @st.cache_data    
-def load_shap_values(shap_pkl_path=r"./shap_values_unscaled.pkl"):
-
+def load_shap_values():
+    
     # Dans le cas du déploiment sur streamlit cloud
     if st.secrets["SHAP_PKL_PATH"]:
         shap_pkl_path = st.secrets["SHAP_PKL_PATH"]
-        
+      
     # Charger le fichier des valeurs de shap
     with open(shap_pkl_path, "rb") as f :
         unpickeled_object = pickle.load(f)
@@ -81,9 +54,64 @@ def load_data():
     all_data = pd.DataFrame(all_data, columns=shap_values_unscaled.feature_names)
    
     return all_data, key_tab, shap_values_unscaled
+def click_button(button_variable):
+        st.session_state[button_variable] = True
+    
+def button_set_value(button_variable, new_value):
+        st.session_state[button_variable] = new_value
+#------------------------Requet_au_sevice_modele------------------------
 
-#------------------------Produire les graphiques--------------------------#
+def request_ping():
+    # donner l'URL
+    ## Fonctionnement tout en local
+    #MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
+
+    ## Fonctionnement en loca et serveur cloud
+    MLFLOW_URL = "https://predict-client-payment-sha256.onrender.com"
+    
+    ## fonctionnement tous cloud
+    #MLFLOW_URL = os.getenv("MLFLOW_URL")
+
+    try:
+        response = requests.get(
+                                url=f"{MLFLOW_URL}/ping",
+                                verify=False,
+                                timeout=5
+                                )
+            
+        return response.status_code, response.text
+    except Exception as e:
+        return None, str(e)
+
 @st.cache_data
+def request_prediction(df):
+    # donner l'URL
+    ## Fonctionnement tout en local
+    #MLFLOW_URL = "http://127.0.0.1:10000" # Pour l'utilisation en local
+
+    ## Fonctionnement en loca et serveur cloud
+    MLFLOW_URL = "https://predict-client-payment-sha256.onrender.com"
+    
+    ## fonctionnement tous cloud
+    #MLFLOW_URL = os.getenv("MLFLOW_URL")
+
+    # Formater le csv pour l'envoi au modèle
+    df_line = df.iloc[[0], :]  # votre ligne
+    csv_buffer = StringIO()
+    df_line.to_csv(csv_buffer, index=False)
+    csv_buffer.seek(0) # Remettre le pointer à 0 suite à l'écriture
+    #csv_data = csv_buffer.getvalue() # Pour voir ce qu'il y a dans le fichier csv produit, peux aussi être passer à request
+    
+    response = requests.post(
+        url=f"{MLFLOW_URL}/invocations", 
+        data=csv_buffer,
+        headers={"Content-Type": "text/csv"},
+        verify=False
+    )
+    
+    return response.status_code, response.json()
+    
+#------------------------Produire les graphiques--------------------------#
 def render_threshold_value(value) :
     
     # Style seaborn pour de belles couleurs par défaut
@@ -95,8 +123,8 @@ def render_threshold_value(value) :
     threshold = 0.5
     
     # Options de couleur pour les deux zones (avant/après seuil)
-    cmap_left = plt.get_cmap("YlGn_r")  # couleur pour [t, 1]
-    cmap_right = plt.get_cmap("YlOrRd")   # couleur pour [0, t] _r pour inverse la gamme
+    cmap_left = plt.get_cmap("YlGn_r")   # couleur pour [0, t] _r pour inverse la gamme
+    cmap_right = plt.get_cmap("YlOrRd")  # couleur pour [t, 1]
     
     # Résolution horizontale (nombre de colonnes dans la barre)
     N = 512
@@ -182,7 +210,8 @@ def render_feature_importance(_shap_values_unscaled) :
         st.pyplot(fig, width="content")
 
 def get_client_index(SK_ID_CURR, key_tab):
-
+    
+    # Relier l'id client avec l'index du fichier de shap_values_unscaled
     try:
         # Relier l'id client avec l'index du fichier de shap_values_unscaled
         mask = key_tab["SK_ID_CURR"] == SK_ID_CURR
@@ -198,17 +227,20 @@ def render_shap_waterfall(_shap_values_unscaled, SK_ID_CURR, key_tab):
 
     index = get_client_index(SK_ID_CURR, key_tab)
     
+    # Client value
+    client_value = _all_data.loc[index, feature]
+    
     # Feature importance local pour un client
     st.write(f"-Feature importance local du client {SK_ID_CURR}")
     st_shap(shap.waterfall_plot(_shap_values_unscaled[index]),
             width=1400,
             height=500
            )
-    
+
     st.markdown('''La valeurs f est un logarithme de la probabilité.  
     - Une valeur négative indique une probabilité de non remboursement inférieur à 50%.  
     - A l'inverse une valeurs positive indique une propbabilté de non remboursement supérieur à 50%.''')
-    
+        
 @st.cache_data
 def render_violineplot(_all_data, key_tab, feature, SK_ID_CURR) :
     
@@ -260,7 +292,7 @@ def render_bivariate_scatterplot(_shap_values_unscaled, SK_ID_CURR, key_tab, fea
     
     # Client value
     index = get_client_index(SK_ID_CURR, key_tab)
-    
+            
     # Description du graphiques
     st.write(f"Nuage de point montrant le lien entre deux features {feature_1} vs {feature_2}")
 
@@ -273,8 +305,7 @@ def render_bivariate_scatterplot(_shap_values_unscaled, SK_ID_CURR, key_tab, fea
                 x = _shap_values_unscaled[:, feature_1].data,
                 y = _shap_values_unscaled[:, feature_2].data,
                 s = 3
-                )
-    
+               )
     ax.set_xlabel(feature_1)
     ax.set_ylabel(feature_2)
 
@@ -282,8 +313,8 @@ def render_bivariate_scatterplot(_shap_values_unscaled, SK_ID_CURR, key_tab, fea
                y = _shap_values_unscaled[index, feature_2].data,
                s = 3,
                c = "red",
-                )
-            
+                )  
+          
     st.pyplot(fig, 
               width="content"
              )
@@ -332,23 +363,23 @@ def main():
 
         ## Depuis la base de données client
         if uploaded_file == None :
-            SK_ID_CURR = st.number_input("- Définiser un identifiant client ici [100003 ; 105003] :", 
+            SK_ID_CURR = st.number_input("- Définiser un identifiant client ici :", 
                                          value=None,
                                          format="%0f",
                                          placeholder="Identifiant client : SK_ID_CURR"
                                         )
-            
-            # Transformer le float produit par input_number en entier
+        # Transformer le float produit par input_number en entier
             if SK_ID_CURR is not None :
                 SK_ID_CURR = int(SK_ID_CURR)
                 index = get_client_index(SK_ID_CURR, key_tab)
-                
-                # Vérifier que l'ID demander est dans le dataframe des données d'entraînement
-                if index == "error" :
-                    st.write("ERREUR : Identifiant inconnu entrée un identifiant valide")
-                    st.stop()
-                
 
+            # Vérifier que l'ID demander est dans le dataframe des données d'entraînement
+            if index == "error" :
+               st.write("ERREUR : Identifiant inconnu entrée un identifiant valide")
+                    st.stop()
+
+            # Transformer le float produit par input_number en entier
+                
 ##-------------------- Détaille des valeurs des features les plus importante pour le client sélectionné
     with right_column:
         if SK_ID_CURR is not None :
@@ -375,6 +406,8 @@ def main():
             all_client_values = shap_values_unscaled[index, :].data
             all_client_values = pd.DataFrame([all_client_values], columns = shap_values_unscaled.feature_names)
             client_values = all_client_values[main_features]
+            client_values = shap_values_unscaled[index, main_features].data
+            client_values = pd.DataFrame([client_values], columns = main_features)
             client_values = pd.melt(client_values, value_vars=client_values)
             client_values = client_values.set_index("variable")
 
@@ -394,43 +427,113 @@ def main():
     del left_column, right_column
 
     
-##-------------------- Prédire la probabilité du client en fonction des données d'entré, interrogation de l'API       
-    predict_btn = st.button('Prédire')
+    ##-------------------- Interrogation de l'API, Prédire la probabilité du client en fonction des données d'entré, 
     
-    if predict_btn:
-        
-        pred = None
-        response = None
-        response, pred_dict = request_prediction(all_client_values)
-        
-        # Gerer la réponse du serveur
-        if response == 200 :
-            st.write(f"La requête au serveur a fonctionnée")
-
-            # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 1 ne vas pas rembourser sont crédit
-            pred = pred_dict["predictions"][0][1]
-            #if pred == 0:
-                #st.write(f"Le client {SK_ID_CURR} appartient a la catégorie 0, le modèle prévoit qu'il remboursera son crédit"
-                    #)
-            #elif pred == 1:
-            #st.write(f"Le client {SK_ID_CURR} appartient a la catégorie 1, le modèle prévoit qu'il ne remboursera pas son crédit"
-                #)
-            render_threshold_value(pred)
-            
-        elif response == 400:
-            st.write("La requête au modèle n'a pas marché : Bad Request")
-            
-        else:
-            st.write(f"!! Code résponse inconnue: {response}")
-
-# Graphiques liée au clients
-    # Uniquement si un client a été sélectionné
+    # point 2, une colonne, tester la disponibilité du serveur, lancer une pédiction
+    # Uniquement si un client a été séléctionné
+    
     if SK_ID_CURR is not None :
-
         
-##-------------------- Feature importance 
         '''
-        ## 2) **Comportement du model**
+        ## 2) **Demander au model la probabilité de remboursement du client**
+        '''
+        # Tester la disponibilté de l'API du model
+        if st.button('Vérifier la disponibilté du serveur'):
+            
+            ping_response, ping_text = request_ping()
+    
+            if ping_response == 200 :
+                st.write(f"Le serveur est actif")
+            else :
+                st.write(f"Le serveur n'est pas actif")
+                st.write(f"reponse : {ping_response}, text : {ping_text}")
+            
+        # Utiliser la persistance des valeurs de variable entre les runs
+        if "predict_btn" not in st.session_state:
+            st.session_state["predict_btn"] = False
+    
+        # Lancer la requet à l'API
+        st.button('Prédire', on_click=click_button("predict_btn"))
+        
+        if st.session_state.predict_btn :
+            
+            pred = None
+            response = None
+            response, pred_dict = request_prediction(all_client_values)
+            
+            # Gerer la réponse du serveur
+            if response == 200 :
+                
+                # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 0 vas rembourser sont crédit
+                pred = pred_dict["predictions"][0][0]
+
+                # Produire le graphique
+                render_threshold_value(pred)
+                
+            elif response == 400:
+                st.write("La requête au modèle n'a pas marché : Bad Request")
+            
+            else:
+                st.write(f"!! Code résponse inconnue: {response}")
+
+      ##-------------------- Modifier les données d'entrée et demander une nouvelle prédiction
+
+      # point 3, une colonne, proposer de modifier des valeurs avec un bouton, afficher l'inteface de modification, faire une prédiction et affichier le graph
+        '''
+        ## 3) **Modifier les informations client**
+        '''
+        
+        if "modification_button" not in st.session_state:
+            st.session_state["modification_button"] = 0
+            
+        # Ouvrire l'interface de modification
+        st.button('Modifier des variables', on_click = button_set_value, args=["modification_button",1])
+
+        # Effacer l'interface de modification, annuler les modfication
+        if st.button("Effacer les modifications"):
+            button_set_value("modification_button", 0)
+            
+        # Afficher le l'interface de modification du dataframe
+        if st.session_state.modification_button >= 1 :
+            
+            # Copier le dataset d'origine
+            all_client_values_modified = copy.copy(all_client_values)
+    
+            # Modifier le nouveau dataset, juste certaine colonne
+            all_client_values_modified = st.data_editor(all_client_values_modified,
+                                                       column_order=("CODE_GENDER", "PAYMENT_RATE", "AMT_ANNUITY", "AMT_INCOME_TOTAL",
+                                                                     "EXT_SOURCE_1", "EXT_SOURCE_2", "EXT_SOURCE_3"
+                                                                    )
+                                                       )
+            # Lancer la prédiction par le modèle avec le nouveau dataset
+            st.button("Prédire avec modification", 
+                      on_click=button_set_value, args=["modification_button", 2])
+            
+        # Prédiction avec le nouveau dataset
+        if st.session_state.modification_button >= 2 :
+            
+            pred_bis = None
+            response_bis = None
+            response_bis, pred_dict_bis = request_prediction(all_client_values_modified)
+            
+            # Gerer la réponse du serveur
+            if response_bis == 200 :
+    
+                # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 0 vas rembourser sont crédit
+                pred_bis = pred_dict_bis["predictions"][0][0]
+                
+                # Produire le graphique
+                render_threshold_value(pred_bis)
+                
+            elif response == 400:
+                st.write("La requête au modèle n'a pas marché : Bad Request")
+                
+            else:
+                st.write(f"!! Code résponse inconnue: {response_bis}")
+        
+    ##-------------------- Feature importance 
+        '''
+        ## 4) **Comportement du model**
         '''
         render_feature_importance(shap_values_unscaled)
         
@@ -453,9 +556,9 @@ def main():
 
         render_shap_waterfall(shap_values_unscaled, SK_ID_CURR, key_tab )
         
-##-------------------- Position du client par rapport au reste de la base de données     
+    ##-------------------- Position du client par rapport au reste de la base de données     
         '''
-        ## 3) **Etudier la place du clients pour certaine feature**
+        ## 5) **Etudier la place du clients pour certaine feature**
         '''
         # Utiliser la persistance des valeurs de variable entre les runs
         if "feature" not in st.session_state:
@@ -478,9 +581,9 @@ def main():
             with right_column:
                 render_shap_scatter_plot(shap_values_unscaled, SK_ID_CURR, key_tab, st.session_state.feature)
 
-##-------------------- Etude bivarié des variables
+    ##-------------------- Etude bivarié des variables
         '''
-        ## 4) **Etudier l'intéraction entre deux features**
+        ## 6) **Etudier l'intéraction entre deux features**
         '''
         # Utiliser la persistance des valeurs de variable entre les runs
         if "feature_1" not in st.session_state:
@@ -525,8 +628,5 @@ def main():
 if __name__ == '__main__':
     
     st.set_page_config(layout="wide")
-    
-    # Définir le repertoire actif
-    #os.chdir(r"C:\Users\SUZON\OneDrive - CNR\Documents\Jupyter\Openclassrooms\Projets Openclassrooms\Projet-8-Realisez-un-dashboard-et-assurez-une-veille-technique\app\Streamlit_ui")
     
     main()
