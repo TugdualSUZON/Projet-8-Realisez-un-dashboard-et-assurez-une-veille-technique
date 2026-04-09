@@ -59,6 +59,7 @@ def click_button(button_variable):
     
 def button_set_value(button_variable, new_value):
         st.session_state[button_variable] = new_value
+    
 #------------------------Requet_au_sevice_modele------------------------
 
 def request_ping():
@@ -80,6 +81,7 @@ def request_ping():
                                 )
             
         return response.status_code, response.text
+        
     except Exception as e:
         return None, str(e)
 
@@ -368,6 +370,7 @@ def main():
                                          format="%0f",
                                          placeholder="Identifiant client : SK_ID_CURR"
                                         )
+            
         # Transformer le float produit par input_number en entier
             if SK_ID_CURR is not None :
                 SK_ID_CURR = int(SK_ID_CURR)
@@ -375,10 +378,8 @@ def main():
 
             # Vérifier que l'ID demander est dans le dataframe des données d'entraînement
             if index == "error" :
-               st.write("ERREUR : Identifiant inconnu entrée un identifiant valide")
-                    st.stop()
-
-            # Transformer le float produit par input_number en entier
+                st.write("ERREUR : Identifiant inconnu entrée un identifiant valide")
+                st.stop()
                 
 ##-------------------- Détaille des valeurs des features les plus importante pour le client sélectionné
     with right_column:
