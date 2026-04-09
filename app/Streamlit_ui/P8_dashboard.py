@@ -55,9 +55,11 @@ def load_data():
    
     return all_data, key_tab, shap_values_unscaled
 
-def click_button():
-        st.session_state.clicked = True
-
+def click_button(button_variable):
+        st.session_state[button_variable] = True
+    
+def button_set_value(button_variable, new_value):
+        st.session_state[button_variable] = new_value
 #------------------------Requet_au_sevice_modele------------------------
 
 def request_ping():
@@ -310,7 +312,7 @@ def main():
 #------------------------Haut de page choix du client--------------------------#
     # Haut de page, deux colonnes, une pour sélectionner un client ou déposer un fichier, l'autre pour afficher les valeurs principale de ce client
     '''
-    ## 1) **Ajouter des information client ou saisisez un identifiant client**
+    ## 1) **Ajouter des informations client ou saisisez un identifiant client**
     '''
     ## Définir deux colonnes
     left_column, right_column = st.columns(2)
@@ -400,64 +402,122 @@ def main():
     del left_column, right_column
 
     
-##-------------------- Prédire la probabilité du client en fonction des données d'entré, interrogation de l'API
-
-    # Tester la disponibilté de l'API du model
-    if st.button('Vérifier la disponibilté du serveur'):
-        
-        ping_response, ping_text = request_ping()
-
-        if ping_response == 200 :
-            st.write(f"Le serveur est actif")
-        else :
-            st.write(f"Le serveur n'est pas actif")
-            st.write(f"reponse : {ping_response}, text : {ping_text}")
-        
-    # Utiliser la persistance des valeurs de variable entre les runs
-    if "predict_btn" not in st.session_state:
-        st.session_state["predict_btn"] = False
-
+##-------------------- Interrogation de l'API, Prédire la probabilité du client en fonction des données d'entré, 
     
+    # point 2, une colonne, tester la disponibilité du serveur, lancer une pédiction
+    # Uniquement si un client a été séléctionné
     
-    st.button('Prédire', on_click=click_button)
-    
-    if st.session_state.predict_btn :
-        
-        pred = None
-        response = None
-        response, pred_dict = request_prediction(all_client_values)
-        
-        # Gerer la réponse du serveur
-        if response == 200 :
-
-            # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 0 vas rembourser sont crédit
-            pred = pred_dict["predictions"][0][0]
-            #if pred == 0:
-                #st.write(f"Le client {SK_ID_CURR} appartient a la catégorie 0, le modèle prévoit qu'il remboursera son crédit"
-                    #)
-            #elif pred == 1:
-            #st.write(f"Le client {SK_ID_CURR} appartient a la catégorie 1, le modèle prévoit qu'il ne remboursera pas son crédit"
-                #)
-            render_threshold_value(pred)
-            
-        elif response == 400:
-            st.write("La requête au modèle n'a pas marché : Bad Request")
-            
-        else:
-            st.write(f"!! Code résponse inconnue: {response}")
-
-# Graphiques liée au clients
-    # Uniquement si un client a été sélectionné
     if SK_ID_CURR is not None :
+        
+        '''
+        ## 2) **Demander au model la probabilité de remboursement du client**
+        '''
+        # Tester la disponibilté de l'API du model
+        if st.button('Vérifier la disponibilté du serveur'):
+            
+            ping_response, ping_text = request_ping()
+    
+            if ping_response == 200 :
+                st.write(f"Le serveur est actif")
+            else :
+                st.write(f"Le serveur n'est pas actif")
+                st.write(f"reponse : {ping_response}, text : {ping_text}")
+            
+        # Utiliser la persistance des valeurs de variable entre les runs
+        if "predict_btn" not in st.session_state:
+            st.session_state["predict_btn"] = False
+    
+        # Lancer la requet à l'API
+        st.button('Prédire', on_click=click_button("predict_btn"))
+        
+        if st.session_state.predict_btn :
+            
+            pred = None
+            response = None
+            response, pred_dict = request_prediction(all_client_values)
+            
+            # Gerer la réponse du serveur
+            if response == 200 :
+                
+                # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 0 vas rembourser sont crédit
+                pred = pred_dict["predictions"][0][0]
+
+                # Produire le graphique
+                render_threshold_value(pred)
+                
+            elif response == 400:
+                st.write("La requête au modèle n'a pas marché : Bad Request")
+                
+            else:
+                st.write(f"!! Code résponse inconnue: {response}")
+
+
+    ##-------------------- Prédire la probabilité du client en fonction des données d'entré, interrogation de l'API
+
+    # point 3, une colonne, proposer de modifier des valeurs avec un bouton, afficher l'inteface de modification, faire une prédiction et affichier le graph
+        '''
+        ## 3) **Modifier les informations client**
+        '''
+    
+        
+        if "modification_button" not in st.session_state:
+            st.session_state["modification_button"] = 0
+            
+        # Ouvrire l'interface de modification
+        st.button('Modifier des variables', on_click = button_set_value, args=["modification_button",1])
+
+        # Effacer l'interface de modification, annuler les modfication
+        if st.button("Effacer les modifications"):
+            button_set_value("modification_button", 0)
+            
+        # Afficher le l'interface de modification du dataframe
+        if st.session_state.modification_button >= 1 :
+            
+            # Copier le dataset d'origine
+            all_client_values_modified = copy.copy(all_client_values)
+    
+            # Modifier le nouveau dataset, juste certaine colonne
+            all_client_values_modified = st.data_editor(all_client_values_modified,
+                                                       column_order=("CODE_GENDER", "PAYMENT_RATE", "AMT_ANNUITY", "AMT_INCOME_TOTAL",
+                                                                     "EXT_SOURCE_1", "EXT_SOURCE_2", "EXT_SOURCE_3"
+                                                                    )
+                                                       )
+            # Lancer la prédiction par le modèle avec le nouveau dataset
+            st.button("Prédire avec modification", 
+                      on_click=button_set_value, args=["modification_button", 2])
+            
+        # Prédiction avec le nouveau dataset
+        if st.session_state.modification_button >= 2 :
+            
+            pred_bis = None
+            response_bis = None
+            response_bis, pred_dict_bis = request_prediction(all_client_values_modified)
+            
+            # Gerer la réponse du serveur
+            if response_bis == 200 :
+    
+                # récupèrer la prédiction du modèle, propabilité d'appartenance a la class 0 vas rembourser sont crédit
+                pred_bis = pred_dict_bis["predictions"][0][0]
+                
+                # Produire le graphique
+                render_threshold_value(pred_bis)
+                
+            elif response == 400:
+                st.write("La requête au modèle n'a pas marché : Bad Request")
+                
+            else:
+                st.write(f"!! Code résponse inconnue: {response_bis}")
+        
 
         
-##-------------------- Feature importance 
+    ##--------------------  Graphiques liée au clients, Feature importance 
         '''
-        ## 2) **Comportement du model**
+        ## 4) **Comportement du model**
         '''
+        
         render_feature_importance(shap_values_unscaled)
         
-    ###------------------
+    ##------------------
         #st.title(f"Feature importance local du client {SK_ID_CURR}")
 
         fig, ax = plt.subplots(
@@ -476,9 +536,9 @@ def main():
 
         render_shap_waterfall(shap_values_unscaled, SK_ID_CURR, key_tab )
         
-##-------------------- Position du client par rapport au reste de la base de données     
+    ##-------------------- Position du client par rapport au reste de la base de données     
         '''
-        ## 3) **Etudier la place du clients pour certaine feature**
+        ## 5) **Etudier la place du clients pour certaine feature**
         '''
         # Utiliser la persistance des valeurs de variable entre les runs
         if "feature" not in st.session_state:
@@ -501,9 +561,9 @@ def main():
             with right_column:
                 render_shap_scatter_plot(shap_values_unscaled, SK_ID_CURR, key_tab, st.session_state.feature)
 
-##-------------------- Etude bivarié des variables
+    ##-------------------- Etude bivarié des variables
         '''
-        ## 4) **Etudier l'intéraction entre deux features**
+        ## 6) **Etudier l'intéraction entre deux features**
         '''
         # Utiliser la persistance des valeurs de variable entre les runs
         if "feature_1" not in st.session_state:
